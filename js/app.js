@@ -1043,44 +1043,170 @@ validateButton.addEventListener(
 
 
             /*
+ * =====================================
+ * STEP 5
+ * Convert PPTX → PDF
+ * =====================================
+ */
+
+validateButton.innerHTML =
+    "Mengkonversi ke PDF...";
+
+
+const convertResponse =
+    await fetch(
+        "/api/onedrive/convert-pdf",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json",
+            },
+
+            body:
+                JSON.stringify({
+
+                    parentId:
+                        selectedFolder.id,
+
+                    fileName,
+
+                    /*
+                     * Setelah PDF berhasil
+                     * dibuat dan diupload,
+                     * hapus PPTX sumber.
+                     */
+                    deleteSource:
+                        true,
+
+                }),
+        }
+    );
+
+
+/*
+ * Jika session Microsoft
+ * sudah expired
+ */
+if (
+    convertResponse.status === 401
+) {
+
+    window.location.href =
+        "/api/auth/login";
+
+    return;
+
+}
+
+
+/*
+ * Ambil response conversion
+ */
+const convertData =
+    await convertResponse.json();
+
+
+/*
+ * Cek conversion
+ */
+if (
+    !convertResponse.ok ||
+    !convertData.success
+) {
+
+    throw new Error(
+        convertData.message ||
+        "Gagal mengkonversi sertifikat menjadi PDF."
+    );
+
+}
+
+
+/*
+ * =====================================
+ * STEP 6
+ * Conversion berhasil
+ * =====================================
+ */
+
+const pdfFile =
+    convertData.pdfFile;
+
+
+const pdfWebUrl =
+    pdfFile?.webUrl;
+
+
+/*
+ * Pastikan informasi PDF tersedia
+ */
+if (
+    !pdfFile
+) {
+
+    throw new Error(
+        "PDF berhasil diproses tetapi informasi file PDF tidak ditemukan."
+    );
+
+}
+
+
+/*
+ * =====================================
+ * STEP 7
+ * Tampilkan hasil
+ * =====================================
+ */
+
+if (pdfWebUrl) {
+
+    alert(
+        `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
+        `File: ${pdfFile.name}\n\n` +
+        `Folder: ${selectedFolder.name}\n\n` +
+        `Format: PDF`
+    );
+
+
+    /*
+     * Buka PDF OneDrive
+     */
+    window.open(
+        pdfWebUrl,
+        "_blank"
+    );
+
+} else {
+
+    alert(
+        `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
+        `File: ${pdfFile.name}\n\n` +
+        `Folder: ${selectedFolder.name}`
+    );
+
+}
+
+            /*
              * =====================================
-             * STEP 5
-             * Upload berhasil
+             * Reset tombol
              * =====================================
              */
 
-            const webUrl =
-                uploadData.file?.webUrl;
+            validateButton.disabled = false;
 
-
-            if (webUrl) {
-
-                alert(
-                    `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
-                    `File: ${uploadData.file.name}\n\n` +
-                    `Folder: ${selectedFolder.name}`
-                );
-
-                /*
-                 * Buka file OneDrive
-                 * pada tab baru
-                 */
-                window.open(
-                    webUrl,
-                    "_blank"
-                );
-
-            } else {
-
-                alert(
-                    `✓ Sertifikat berhasil dibuat dan diupload ke OneDrive.\n\n` +
-                    `File: ${uploadData.file?.name || fileName}`
-                );
-
-            }
+            validateButton.innerHTML =
+                "Buat Sertifikat";
 
 
         } catch (error) {
+
+            /*
+             * =====================================
+             * Error Handling
+             * =====================================
+             */
 
             console.error(
                 "Generate certificate error:",
@@ -1089,20 +1215,19 @@ validateButton.addEventListener(
 
 
             alert(
-                `Gagal membuat sertifikat:\n${error.message}`
+                error.message ||
+                "Terjadi kesalahan saat membuat sertifikat."
             );
 
 
-        } finally {
-
             /*
-             * Kembalikan tombol
+             * Aktifkan kembali tombol
              */
-            validateButton.disabled =
-                false;
+
+            validateButton.disabled = false;
 
             validateButton.innerHTML =
-                'Preview & Validasi Data <span>→</span>';
+                "Buat Sertifikat";
 
         }
 

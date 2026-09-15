@@ -47,6 +47,7 @@ module.exports = async function handler(req, res) {
         const {
             parentId,
             fileName,
+            deleteSource = false,
         } = req.body;
 
 
@@ -68,6 +69,7 @@ module.exports = async function handler(req, res) {
          */
 
         let childrenUrl;
+
 
         if (parentId) {
 
@@ -110,10 +112,12 @@ module.exports = async function handler(req, res) {
                 childrenData
             );
 
+
             return res.status(
                 childrenResponse.status
             ).json({
                 success: false,
+
                 message:
                     childrenData.error?.message ||
                     "Gagal mencari file PPTX di OneDrive.",
@@ -123,8 +127,11 @@ module.exports = async function handler(req, res) {
 
 
         /*
+         * =====================================
          * Cari file berdasarkan nama
+         * =====================================
          */
+
         const sourceFile =
             (childrenData.value || []).find(
                 (item) =>
@@ -137,6 +144,7 @@ module.exports = async function handler(req, res) {
 
             return res.status(404).json({
                 success: false,
+
                 message:
                     `File "${fileName}" tidak ditemukan di folder OneDrive.`,
             });
@@ -173,18 +181,22 @@ module.exports = async function handler(req, res) {
             const errorText =
                 await convertResponse.text();
 
+
             console.error(
                 "Microsoft Graph conversion error:",
                 convertResponse.status,
                 errorText
             );
 
+
             return res.status(
                 convertResponse.status
             ).json({
                 success: false,
+
                 message:
                     "Gagal mengkonversi PPTX menjadi PDF.",
+
                 details:
                     errorText,
             });
@@ -193,8 +205,11 @@ module.exports = async function handler(req, res) {
 
 
         /*
+         * =====================================
          * Ambil hasil PDF sebagai Buffer
+         * =====================================
          */
+
         const pdfBuffer =
             Buffer.from(
                 await convertResponse.arrayBuffer()
@@ -205,6 +220,7 @@ module.exports = async function handler(req, res) {
 
             return res.status(500).json({
                 success: false,
+
                 message:
                     "Microsoft Graph mengembalikan file PDF kosong.",
             });
@@ -232,6 +248,7 @@ module.exports = async function handler(req, res) {
          */
 
         let uploadUrl;
+
 
         if (parentId) {
 
@@ -279,14 +296,104 @@ module.exports = async function handler(req, res) {
                 uploadData
             );
 
+
             return res.status(
                 uploadResponse.status
             ).json({
                 success: false,
+
                 message:
                     uploadData.error?.message ||
                     "Gagal menyimpan PDF ke OneDrive.",
             });
+
+        }
+
+
+        /*
+         * =====================================
+         * Hapus file PPTX sumber
+         * =====================================
+         *
+         * Hanya dilakukan jika frontend
+         * mengirim deleteSource: true
+         */
+
+        let sourceDeleted = false;
+
+
+        if (deleteSource) {
+
+            const deleteUrl =
+                `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(sourceFile.id)}`;
+
+
+            const deleteResponse =
+                await fetch(
+                    deleteUrl,
+                    {
+                        method: "DELETE",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${session.accessToken}`,
+                        },
+                    }
+                );
+
+
+            if (!deleteResponse.ok) {
+
+                const deleteError =
+                    await deleteResponse.text();
+
+
+                console.error(
+                    "Microsoft Graph delete PPTX error:",
+                    deleteResponse.status,
+                    deleteError
+                );
+
+
+                /*
+                 * PDF sudah berhasil dibuat,
+                 * tetapi PPTX gagal dihapus.
+                 */
+
+                return res.status(
+                    deleteResponse.status
+                ).json({
+
+                    success: false,
+
+                    message:
+                        "PDF berhasil dibuat, tetapi file PPTX gagal dihapus.",
+
+                    details:
+                        deleteError,
+
+                    pdfFile: {
+
+                        id:
+                            uploadData.id,
+
+                        name:
+                            uploadData.name,
+
+                        size:
+                            uploadData.size,
+
+                        webUrl:
+                            uploadData.webUrl ||
+                            null,
+                    },
+
+                });
+
+            }
+
+
+            sourceDeleted = true;
 
         }
 
@@ -302,16 +409,32 @@ module.exports = async function handler(req, res) {
             success: true,
 
             sourceFile: {
-                id: sourceFile.id,
-                name: sourceFile.name,
+
+                id:
+                    sourceFile.id,
+
+                name:
+                    sourceFile.name,
+
             },
 
+            sourceDeleted,
+
             pdfFile: {
-                id: uploadData.id,
-                name: uploadData.name,
-                size: uploadData.size,
+
+                id:
+                    uploadData.id,
+
+                name:
+                    uploadData.name,
+
+                size:
+                    uploadData.size,
+
                 webUrl:
-                    uploadData.webUrl || null,
+                    uploadData.webUrl ||
+                    null,
+
             },
 
         });
@@ -326,10 +449,13 @@ module.exports = async function handler(req, res) {
 
 
         return res.status(500).json({
+
             success: false,
+
             message:
                 error.message ||
                 "Gagal mengkonversi PPTX menjadi PDF.",
+
         });
 
     }
