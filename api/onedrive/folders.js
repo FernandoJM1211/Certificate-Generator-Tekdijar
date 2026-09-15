@@ -21,16 +21,27 @@ module.exports = async function handler(req, res) {
             });
         }
 
-        const response = await fetch(
-            "https://graph.microsoft.com/v1.0/me/drive/root/children?$select=id,name,folder,webUrl",
-            {
-                method: "GET",
-                headers: {
-                    Authorization:
-                        `Bearer ${session.accessToken}`,
-                },
-            }
-        );
+        const parentId = req.query.parentId;
+
+        let graphUrl;
+
+        if (parentId) {
+            graphUrl =
+                `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(parentId)}/children` +
+                `?$select=id,name,folder,webUrl,file`;
+        } else {
+            graphUrl =
+                "https://graph.microsoft.com/v1.0/me/drive/root/children" +
+                "?$select=id,name,folder,webUrl,file";
+        }
+
+        const response = await fetch(graphUrl, {
+            method: "GET",
+            headers: {
+                Authorization:
+                    `Bearer ${session.accessToken}`,
+            },
+        });
 
         const data = await response.json();
 
@@ -54,19 +65,28 @@ module.exports = async function handler(req, res) {
             .map((item) => ({
                 id: item.id,
                 name: item.name,
-                webUrl: item.webUrl,
+                webUrl: item.webUrl || null,
                 childCount:
-                    item.folder.childCount || 0,
-            }));
+                    item.folder?.childCount || 0,
+            }))
+            .sort((a, b) =>
+                a.name.localeCompare(
+                    b.name,
+                    "id",
+                    {
+                        sensitivity: "base",
+                    }
+                )
+            );
 
         return res.status(200).json({
             success: true,
             account: session.username,
+            parentId: parentId || null,
             folders,
         });
 
     } catch (error) {
-
         console.error(
             "OneDrive folders error:",
             error
