@@ -52,12 +52,19 @@ module.exports = async function handler(req, res) {
                 error_description
             );
 
-            res.setHeader("Set-Cookie", clearStateCookie());
+            res.setHeader(
+                "Set-Cookie",
+                clearStateCookie()
+            );
 
             return res.status(400).send(`
                 <h1>Login Microsoft gagal</h1>
                 <p>${error_description || error}</p>
-                <p><a href="/">Kembali ke Certificate Generator</a></p>
+                <p>
+                    <a href="/">
+                        Kembali ke Certificate Generator
+                    </a>
+                </p>
             `);
         }
 
@@ -76,7 +83,11 @@ module.exports = async function handler(req, res) {
             return res.status(400).send(`
                 <h1>OAuth State tidak valid</h1>
                 <p>Silakan ulangi proses login.</p>
-                <p><a href="/">Kembali ke Certificate Generator</a></p>
+                <p>
+                    <a href="/">
+                        Kembali ke Certificate Generator
+                    </a>
+                </p>
             `);
         }
 
@@ -110,12 +121,58 @@ module.exports = async function handler(req, res) {
             tokenResponse.account?.username ||
             "Akun Microsoft";
 
+        // Access token digunakan untuk mengakses Microsoft Graph.
+        // Token tidak ditampilkan atau dikirim ke browser.
+        const accessToken =
+            tokenResponse.accessToken;
+
+        // Test akses OneDrive melalui Microsoft Graph.
+        const graphResponse = await fetch(
+            "https://graph.microsoft.com/v1.0/me/drive",
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+
+        const graphData =
+            await graphResponse.json();
+
+        if (!graphResponse.ok) {
+            console.error(
+                "Microsoft Graph error:",
+                graphResponse.status,
+                graphData
+            );
+
+            throw new Error(
+                graphData.error?.message ||
+                "Gagal mengakses OneDrive."
+            );
+        }
+
+        const driveName =
+            graphData.name ||
+            "OneDrive";
+
         return res.status(200).send(`
             <!DOCTYPE html>
             <html lang="id">
+
             <head>
                 <meta charset="UTF-8">
-                <title>Login Berhasil</title>
+
+                <meta
+                    name="viewport"
+                    content="width=device-width, initial-scale=1.0"
+                >
+
+                <title>
+                    OneDrive Berhasil Terhubung
+                </title>
+
                 <style>
                     body {
                         font-family: Arial, sans-serif;
@@ -125,10 +182,17 @@ module.exports = async function handler(req, res) {
                     }
 
                     .success {
-                        padding: 20px;
+                        padding: 24px;
                         border-radius: 12px;
                         background: #ecfdf5;
                         border: 1px solid #a7f3d0;
+                    }
+
+                    .item {
+                        margin-top: 16px;
+                        padding: 12px;
+                        background: white;
+                        border-radius: 8px;
                     }
 
                     a {
@@ -139,27 +203,47 @@ module.exports = async function handler(req, res) {
             </head>
 
             <body>
+
                 <div class="success">
-                    <h1>✓ Login Microsoft Berhasil</h1>
 
-                    <p>
-                        Akun yang terautentikasi:
-                    </p>
+                    <h1>
+                        ✓ OneDrive Berhasil Terhubung
+                    </h1>
 
-                    <strong>
+                    <div class="item">
+                        <strong>
+                            Akun Microsoft
+                        </strong>
+
+                        <br>
+
                         ${username}
-                    </strong>
+                    </div>
+
+                    <div class="item">
+                        <strong>
+                            OneDrive
+                        </strong>
+
+                        <br>
+
+                        ${driveName}
+                    </div>
 
                     <p>
-                        Microsoft Graph berhasil memberikan
-                        access token kepada aplikasi.
+                        Microsoft Graph berhasil mengakses
+                        OneDrive menggunakan access token
+                        aplikasi.
                     </p>
+
                 </div>
 
                 <a href="/">
                     ← Kembali ke Certificate Generator
                 </a>
+
             </body>
+
             </html>
         `);
 
@@ -171,9 +255,15 @@ module.exports = async function handler(req, res) {
 
         return res.status(500).send(`
             <h1>Login Microsoft gagal</h1>
-            <p>${error.message}</p>
+
             <p>
-                <a href="/">Kembali ke Certificate Generator</a>
+                ${error.message}
+            </p>
+
+            <p>
+                <a href="/">
+                    Kembali ke Certificate Generator
+                </a>
             </p>
         `);
     }
