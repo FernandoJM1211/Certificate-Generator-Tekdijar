@@ -791,7 +791,7 @@ function sanitizeFileName(
    Batch Processing
 ========================================= */
 
-const MAX_WORKERS = 7;
+const MAX_WORKERS = 11;
 
 let batchParticipants = [];
 let batchResults = [];
