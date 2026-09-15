@@ -24,7 +24,9 @@ body {
 }
 
 
-/* Header */
+/* =========================================
+   Header
+========================================= */
 
 .header {
     background: var(--surface);
@@ -58,7 +60,9 @@ body {
 }
 
 
-/* Main */
+/* =========================================
+   Main
+========================================= */
 
 .main {
     width: min(960px, calc(100% - 32px));
@@ -66,7 +70,9 @@ body {
 }
 
 
-/* Card */
+/* =========================================
+   Card
+========================================= */
 
 .card {
     background: var(--surface);
@@ -113,7 +119,9 @@ body {
 }
 
 
-/* Upload */
+/* =========================================
+   Upload
+========================================= */
 
 .upload-area {
     border: 2px dashed #d1d5db;
@@ -153,7 +161,9 @@ code {
 }
 
 
-/* Form */
+/* =========================================
+   Form
+========================================= */
 
 .form-group {
     display: flex;
@@ -193,7 +203,9 @@ code {
 }
 
 
-/* Drive */
+/* =========================================
+   OneDrive / Folder Selection
+========================================= */
 
 .drive-placeholder {
     display: flex;
@@ -212,12 +224,17 @@ code {
 
 .drive-content {
     flex: 1;
+    min-width: 0;
 }
 
 .drive-content strong {
     display: block;
     margin-bottom: 4px;
     font-size: 14px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .drive-content p {
@@ -227,7 +244,9 @@ code {
 }
 
 
-/* Buttons */
+/* =========================================
+   Buttons
+========================================= */
 
 .button {
     display: inline-flex;
@@ -257,6 +276,11 @@ code {
     background: var(--primary-dark);
 }
 
+.button.primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .button.secondary {
     background: white;
     color: var(--text-primary);
@@ -267,8 +291,15 @@ code {
     background: #f9fafb;
 }
 
+.button.secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 
-/* File */
+
+/* =========================================
+   File
+========================================= */
 
 .file-info {
     margin-top: 16px;
@@ -280,7 +311,9 @@ code {
 }
 
 
-/* Action */
+/* =========================================
+   Action
+========================================= */
 
 .action-section {
     text-align: center;
@@ -298,7 +331,9 @@ code {
 }
 
 
-/* Footer */
+/* =========================================
+   Footer
+========================================= */
 
 .footer {
     padding: 24px;
@@ -308,7 +343,410 @@ code {
 }
 
 
-/* Responsive */
+/* =========================================
+   OneDrive Folder Picker Modal
+========================================= */
+
+.folder-modal {
+    position: fixed;
+    inset: 0;
+
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+}
+
+.folder-modal[hidden] {
+    display: none;
+}
+
+
+/* Overlay */
+
+.folder-modal-overlay {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(15, 23, 42, 0.55);
+
+    backdrop-filter: blur(3px);
+}
+
+
+/* Modal */
+
+.folder-modal-content {
+    position: relative;
+    z-index: 1;
+
+    width: min(680px, 100%);
+    max-height: min(760px, 90vh);
+
+    display: flex;
+    flex-direction: column;
+
+    background: white;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 20px 60px rgba(15, 23, 42, 0.20);
+
+    overflow: hidden;
+}
+
+
+/* Modal Header */
+
+.folder-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    padding: 24px 28px 20px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.folder-modal-header .eyebrow {
+    margin-bottom: 4px;
+}
+
+.folder-modal-header h2 {
+    margin: 0;
+
+    font-size: 22px;
+    line-height: 1.3;
+}
+
+
+/* Close Button */
+
+.folder-close-button {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+
+    font-size: 28px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    color: #64748b;
+
+    transition: 0.2s ease;
+}
+
+.folder-close-button:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+
+/* =========================================
+   Breadcrumb
+========================================= */
+
+.folder-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    padding: 14px 28px;
+
+    border-bottom: 1px solid var(--border);
+
+    overflow-x: auto;
+
+    white-space: nowrap;
+}
+
+.breadcrumb-item {
+    border: none;
+    background: transparent;
+
+    padding: 6px 8px;
+
+    border-radius: 6px;
+
+    color: #64748b;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.breadcrumb-item:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.breadcrumb-item.active {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.breadcrumb-separator {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+
+/* =========================================
+   Folder Status
+========================================= */
+
+.folder-status {
+    margin: 16px 28px 0;
+
+    padding: 12px 14px;
+
+    border-radius: 8px;
+
+    background: #f8fafc;
+
+    color: #475569;
+
+    font-size: 14px;
+}
+
+.folder-status.error {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+
+/* =========================================
+   Folder List
+========================================= */
+
+.folder-list {
+    min-height: 220px;
+    max-height: 400px;
+
+    overflow-y: auto;
+
+    padding: 12px 16px;
+}
+
+.folder-item {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 13px 12px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: transparent;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+.folder-item:hover {
+    background: #f8fafc;
+}
+
+.folder-item:active {
+    transform: scale(0.99);
+}
+
+
+/* Folder Icon */
+
+.folder-icon {
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #eff6ff;
+
+    font-size: 20px;
+}
+
+
+/* Folder Information */
+
+.folder-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.folder-name {
+    display: block;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    color: #0f172a;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.folder-meta {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 12px;
+
+    color: #94a3b8;
+}
+
+
+/* Arrow */
+
+.folder-arrow {
+    flex-shrink: 0;
+
+    color: #94a3b8;
+
+    font-size: 18px;
+}
+
+
+/* =========================================
+   Empty Folder
+========================================= */
+
+.folder-empty {
+    min-height: 220px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 32px;
+
+    color: var(--text-secondary);
+}
+
+.folder-empty[hidden] {
+    display: none;
+}
+
+.folder-empty-icon {
+    margin-bottom: 12px;
+
+    font-size: 36px;
+}
+
+.folder-empty strong {
+    color: #334155;
+}
+
+.folder-empty p {
+    margin: 6px 0 0;
+
+    font-size: 14px;
+}
+
+
+/* =========================================
+   Folder Modal Footer
+========================================= */
+
+.folder-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 18px 28px;
+
+    border-top: 1px solid var(--border);
+
+    background: #fafafa;
+}
+
+.folder-current {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.folder-current span {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.folder-current strong {
+    font-size: 14px;
+
+    color: #334155;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================
+   Scrollbar Folder List
+========================================= */
+
+.folder-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.folder-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.folder-list::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+.folder-list::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+
+/* =========================================
+   Responsive
+========================================= */
 
 @media (max-width: 640px) {
 
@@ -341,4 +779,39 @@ code {
     .drive-placeholder .button {
         width: 100%;
     }
+
+
+    /* Folder Modal */
+
+    .folder-modal {
+        padding: 12px;
+    }
+
+    .folder-modal-content {
+        max-height: 94vh;
+    }
+
+    .folder-modal-header {
+        padding: 20px;
+    }
+
+    .folder-breadcrumb {
+        padding: 12px 20px;
+    }
+
+    .folder-list {
+        padding: 10px;
+    }
+
+    .folder-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+
+        padding: 16px 20px;
+    }
+
+    .folder-modal-footer .button {
+        width: 100%;
+    }
+
 }

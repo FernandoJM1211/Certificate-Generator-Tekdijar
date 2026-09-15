@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Certificate Generator</title>
+
     <meta
         name="description"
         content="Generate sertifikat peserta secara otomatis."
@@ -19,15 +20,23 @@
 
         <!-- Header -->
         <header class="header">
-            <div>
-                <p class="eyebrow">TEKDIJAR</p>
 
-                <h1>Certificate Generator</h1>
+            <div>
+
+                <p class="eyebrow">
+                    TEKDIJAR
+                </p>
+
+                <h1>
+                    Certificate Generator
+                </h1>
 
                 <p class="subtitle">
                     Generate dan distribusikan sertifikat peserta secara otomatis.
                 </p>
+
             </div>
+
         </header>
 
 
@@ -44,11 +53,15 @@
                     </div>
 
                     <div>
-                        <h2>Template Sertifikat</h2>
+
+                        <h2>
+                            Template Sertifikat
+                        </h2>
 
                         <p>
                             Upload template sertifikat yang akan digunakan.
                         </p>
+
                     </div>
 
                 </div>
@@ -112,11 +125,15 @@
                     </div>
 
                     <div>
-                        <h2>Data Peserta</h2>
+
+                        <h2>
+                            Data Peserta
+                        </h2>
 
                         <p>
                             Masukkan nama peserta untuk melakukan pengujian.
                         </p>
+
                     </div>
 
                 </div>
@@ -157,11 +174,15 @@
                     </div>
 
                     <div>
-                        <h2>Folder Penyimpanan</h2>
+
+                        <h2>
+                            Folder Penyimpanan
+                        </h2>
 
                         <p>
-                            Tentukan folder Google Drive untuk menyimpan sertifikat.
+                            Tentukan folder OneDrive untuk menyimpan sertifikat.
                         </p>
+
                     </div>
 
                 </div>
@@ -176,13 +197,15 @@
 
                     <div class="drive-content">
 
-                        <strong>
-                            Folder Google Drive
+                        <strong id="selectedFolderName">
+                            Belum ada folder dipilih
                         </strong>
 
-                        <p>
+
+                        <p id="selectedFolderDescription">
                             Sertifikat yang berhasil dibuat akan
-                            otomatis diupload ke folder ini.
+                            otomatis disimpan ke folder OneDrive
+                            yang dipilih.
                         </p>
 
                     </div>
@@ -209,11 +232,13 @@
                     class="button primary"
                     id="validateButton"
                 >
+
                     Preview & Validasi Data
 
                     <span>
                         →
                     </span>
+
                 </button>
 
 
@@ -224,6 +249,142 @@
             </section>
 
         </main>
+
+
+        <!-- OneDrive Folder Picker Modal -->
+        <div
+            class="folder-modal"
+            id="folderModal"
+            hidden
+        >
+
+            <!-- Overlay -->
+            <div
+                class="folder-modal-overlay"
+                id="folderModalOverlay"
+            ></div>
+
+
+            <!-- Modal Content -->
+            <div
+                class="folder-modal-content"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="folderModalTitle"
+            >
+
+                <!-- Modal Header -->
+                <div class="folder-modal-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ONEDRIVE
+                        </p>
+
+                        <h2 id="folderModalTitle">
+                            Pilih Folder
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="folder-close-button"
+                        id="closeFolderModal"
+                        aria-label="Tutup"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <!-- Breadcrumb -->
+                <div
+                    class="folder-breadcrumb"
+                    id="folderBreadcrumb"
+                >
+
+                    <!-- Breadcrumb akan dibuat oleh JavaScript -->
+
+                </div>
+
+
+                <!-- Status -->
+                <div
+                    class="folder-status"
+                    id="folderStatus"
+                    hidden
+                ></div>
+
+
+                <!-- Folder List -->
+                <div
+                    class="folder-list"
+                    id="folderList"
+                >
+
+                    <!-- Folder akan dimuat melalui JavaScript -->
+
+                </div>
+
+
+                <!-- Empty State -->
+                <div
+                    class="folder-empty"
+                    id="folderEmpty"
+                    hidden
+                >
+
+                    <div class="folder-empty-icon">
+                        📂
+                    </div>
+
+
+                    <strong>
+                        Tidak ada subfolder
+                    </strong>
+
+
+                    <p>
+                        Folder ini tidak memiliki subfolder.
+                    </p>
+
+                </div>
+
+
+                <!-- Modal Footer -->
+                <div class="folder-modal-footer">
+
+                    <div class="folder-current">
+
+                        <span>
+                            Folder saat ini:
+                        </span>
+
+
+                        <strong id="currentFolderName">
+                            OneDrive
+                        </strong>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="button primary"
+                        id="chooseCurrentFolder"
+                    >
+                        Pilih Folder Ini
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
 
 
         <!-- Footer -->
