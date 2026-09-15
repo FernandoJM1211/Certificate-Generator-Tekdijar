@@ -8,3 +8,4 @@ test-pptx.js
 .env.local
 
 .DS_Store
+.vercel

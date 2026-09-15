@@ -21,7 +21,9 @@
         <header class="header">
             <div>
                 <p class="eyebrow">TEKDIJAR</p>
+
                 <h1>Certificate Generator</h1>
+
                 <p class="subtitle">
                     Generate dan distribusikan sertifikat peserta secara otomatis.
                 </p>
@@ -32,43 +34,62 @@
         <!-- Main -->
         <main class="main">
 
-            <!-- Step 1 -->
+            <!-- Step 1: Template -->
             <section class="card">
 
                 <div class="section-header">
-                    <div class="step-number">01</div>
+
+                    <div class="step-number">
+                        01
+                    </div>
 
                     <div>
                         <h2>Template Sertifikat</h2>
+
                         <p>
                             Upload template sertifikat yang akan digunakan.
                         </p>
                     </div>
+
                 </div>
 
-                <div class="upload-area" id="templateUploadArea">
+
+                <div
+                    class="upload-area"
+                    id="templateUploadArea"
+                >
 
                     <div class="upload-icon">
                         📄
                     </div>
 
-                    <h3>Upload template sertifikat</h3>
+
+                    <h3>
+                        Upload template sertifikat
+                    </h3>
+
 
                     <p>
-                        Gunakan file DOCX dengan placeholder
+                        Gunakan file PPTX dengan placeholder
                         <code>{{NAMA}}</code>
                     </p>
 
-                    <label class="button secondary" for="templateFile">
+
+                    <label
+                        class="button secondary"
+                        for="templateFile"
+                    >
                         Pilih File
                     </label>
+
 
                     <input
                         type="file"
                         id="templateFile"
-                        accept=".docx"
+                        accept=".pptx"
                         hidden
                     >
+
 
                     <div
                         class="file-info"
@@ -81,35 +102,44 @@
             </section>
 
 
-            <!-- Step 2 -->
+            <!-- Step 2: Nama Peserta -->
             <section class="card">
 
                 <div class="section-header">
-                    <div class="step-number">02</div>
+
+                    <div class="step-number">
+                        02
+                    </div>
 
                     <div>
                         <h2>Data Peserta</h2>
+
                         <p>
-                            Hubungkan Google Spreadsheet yang berisi data peserta.
+                            Masukkan nama peserta untuk melakukan pengujian.
                         </p>
                     </div>
+
                 </div>
+
 
                 <div class="form-group">
 
-                    <label for="spreadsheetUrl">
-                        Link Google Spreadsheet
+                    <label for="participantName">
+                        Nama Peserta
                     </label>
 
+
                     <input
-                        type="url"
-                        id="spreadsheetUrl"
+                        type="text"
+                        id="participantName"
                         class="input"
-                        placeholder="https://docs.google.com/spreadsheets/..."
+                        placeholder="Contoh: BUDI SANTOSO"
                     >
 
+
                     <p class="helper">
-                        Pastikan spreadsheet memiliki kolom Nama Peserta.
+                        Nama ini akan menggantikan placeholder
+                        <code>{{NAMA}}</code> pada template.
                     </p>
 
                 </div>
@@ -117,19 +147,25 @@
             </section>
 
 
-            <!-- Step 3 -->
+            <!-- Step 3: Folder -->
             <section class="card">
 
                 <div class="section-header">
-                    <div class="step-number">03</div>
+
+                    <div class="step-number">
+                        03
+                    </div>
 
                     <div>
                         <h2>Folder Penyimpanan</h2>
+
                         <p>
                             Tentukan folder Google Drive untuk menyimpan sertifikat.
                         </p>
                     </div>
+
                 </div>
+
 
                 <div class="drive-placeholder">
 
@@ -137,9 +173,12 @@
                         📁
                     </div>
 
+
                     <div class="drive-content">
 
-                        <strong>Folder Google Drive</strong>
+                        <strong>
+                            Folder Google Drive
+                        </strong>
 
                         <p>
                             Sertifikat yang berhasil dibuat akan
@@ -147,6 +186,7 @@
                         </p>
 
                     </div>
+
 
                     <button
                         type="button"
@@ -170,8 +210,12 @@
                     id="validateButton"
                 >
                     Preview & Validasi Data
-                    <span>→</span>
+
+                    <span>
+                        →
+                    </span>
                 </button>
+
 
                 <p class="action-helper">
                     Data akan divalidasi sebelum proses generate sertifikat dimulai.
@@ -184,10 +228,14 @@
 
         <!-- Footer -->
         <footer class="footer">
-            Certificate Generator · Direktorat Teknologi dan Digitalisasi Pembelajaran
+
+            Certificate Generator ·
+            Direktorat Teknologi dan Digitalisasi Pembelajaran
+
         </footer>
 
     </div>
+
 
     <script src="js/app.js"></script>
 
