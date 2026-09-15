@@ -12,6 +12,165 @@
     >
 
     <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .batch-input-helper {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .batch-textarea {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            padding: 16px;
+            border: 1px solid #dbe2ea;
+            border-radius: 12px;
+            font: inherit;
+            color: #0f172a;
+            background: #fff;
+            box-sizing: border-box;
+        }
+
+        .batch-textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+        .batch-panel {
+            margin-top: 24px;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .batch-panel-header {
+            padding: 16px 18px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .batch-panel-header strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .batch-panel-header p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .batch-table-wrap {
+            overflow-x: auto;
+        }
+
+        .batch-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .batch-table th,
+        .batch-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid #eef2f7;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .batch-table th {
+            font-weight: 700;
+            background: #fff;
+            white-space: nowrap;
+        }
+
+        .batch-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .batch-status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .batch-status.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .batch-status.processing {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .batch-link-cell a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .batch-progress {
+            margin-top: 20px;
+            padding: 18px;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .batch-progress-track {
+            width: 100%;
+            height: 10px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e2e8f0;
+        }
+
+        .batch-progress-bar {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: #2563eb;
+            transition: width 0.25s ease;
+        }
+
+        .batch-progress-text {
+            margin-top: 10px;
+            font-weight: 700;
+        }
+
+        .batch-progress-summary {
+            margin-top: 5px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .batch-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .batch-ready {
+            min-width: 250px;
+        }
+    </style>
 </head>
 
 <body>
@@ -20,9 +179,7 @@
 
         <!-- Header -->
         <header class="header">
-
             <div>
-
                 <p class="eyebrow">
                     TEKDIJAR
                 </p>
@@ -34,9 +191,7 @@
                 <p class="subtitle">
                     Generate dan distribusikan sertifikat peserta secara otomatis.
                 </p>
-
             </div>
-
         </header>
 
 
@@ -53,7 +208,6 @@
                     </div>
 
                     <div>
-
                         <h2>
                             Template Sertifikat
                         </h2>
@@ -61,7 +215,6 @@
                         <p>
                             Upload template sertifikat yang akan digunakan.
                         </p>
-
                     </div>
 
                 </div>
@@ -76,17 +229,14 @@
                         📄
                     </div>
 
-
                     <h3>
                         Upload template sertifikat
                     </h3>
-
 
                     <p>
                         Gunakan file PPTX dengan placeholder
                         <code>{{NAMA}}</code>
                     </p>
-
 
                     <label
                         class="button secondary"
@@ -95,14 +245,12 @@
                         Pilih File
                     </label>
 
-
                     <input
                         type="file"
                         id="templateFile"
                         accept=".pptx"
                         hidden
                     >
-
 
                     <div
                         class="file-info"
@@ -115,7 +263,7 @@
             </section>
 
 
-            <!-- Step 2: Nama Peserta -->
+            <!-- Step 2: Data Peserta -->
             <section class="card">
 
                 <div class="section-header">
@@ -125,15 +273,13 @@
                     </div>
 
                     <div>
-
                         <h2>
                             Data Peserta
                         </h2>
 
                         <p>
-                            Masukkan nama peserta untuk melakukan pengujian.
+                            Masukkan daftar peserta, satu nama per baris.
                         </p>
-
                     </div>
 
                 </div>
@@ -141,22 +287,22 @@
 
                 <div class="form-group">
 
-                    <label for="participantName">
-                        Nama Peserta
+                    <label for="participantNames">
+                        Daftar Nama Peserta
                     </label>
 
+                    <textarea
+                        id="participantNames"
+                        class="batch-textarea"
+                        placeholder="Contoh:
+BUDI SANTOSO
+SITI NURHALIZA
+FERNANDO MANALU"
+                    ></textarea>
 
-                    <input
-                        type="text"
-                        id="participantName"
-                        class="input"
-                        placeholder="Contoh: BUDI SANTOSO"
-                    >
-
-
-                    <p class="helper">
-                        Nama ini akan menggantikan placeholder
-                        <code>{{NAMA}}</code> pada template.
+                    <p class="batch-input-helper">
+                        Masukkan satu nama pada setiap baris.
+                        Nama duplikat akan ditolak sebelum proses dimulai.
                     </p>
 
                 </div>
@@ -174,7 +320,6 @@
                     </div>
 
                     <div>
-
                         <h2>
                             Folder Penyimpanan
                         </h2>
@@ -182,7 +327,6 @@
                         <p>
                             Tentukan folder OneDrive untuk menyimpan sertifikat.
                         </p>
-
                     </div>
 
                 </div>
@@ -194,13 +338,11 @@
                         📁
                     </div>
 
-
                     <div class="drive-content">
 
                         <strong id="selectedFolderName">
                             Belum ada folder dipilih
                         </strong>
-
 
                         <p id="selectedFolderDescription">
                             Sertifikat yang berhasil dibuat akan
@@ -210,13 +352,173 @@
 
                     </div>
 
-
                     <button
                         type="button"
                         class="button secondary"
                         id="selectDriveFolder"
                     >
                         Pilih Folder
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- Preview -->
+            <section
+                class="card"
+                id="previewSection"
+                hidden
+            >
+
+                <div class="section-header">
+
+                    <div class="step-number">
+                        04
+                    </div>
+
+                    <div>
+                        <h2>
+                            Preview & Validasi
+                        </h2>
+
+                        <p>
+                            Periksa daftar peserta sebelum sertifikat dibuat.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="batch-panel">
+
+                    <div class="batch-panel-header">
+                        <strong>
+                            Daftar peserta
+                        </strong>
+
+                        <p>
+                            Pastikan nama sudah benar sebelum memulai generate.
+                        </p>
+                    </div>
+
+                    <div class="batch-table-wrap">
+
+                        <table class="batch-table">
+
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Nama Peserta</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="previewTableBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- Progress -->
+            <section
+                class="card"
+                id="progressSection"
+                hidden
+            >
+
+                <div class="section-header">
+
+                    <div class="step-number">
+                        05
+                    </div>
+
+                    <div>
+                        <h2>
+                            Progress Generate
+                        </h2>
+
+                        <p>
+                            Proses berjalan dengan maksimal 3 worker secara bersamaan.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="batch-progress">
+
+                    <div class="batch-progress-track">
+                        <div
+                            class="batch-progress-bar"
+                            id="progressBar"
+                        ></div>
+                    </div>
+
+                    <div
+                        class="batch-progress-text"
+                        id="progressText"
+                    >
+                        0 dari 0 selesai diproses (0%)
+                    </div>
+
+                    <div
+                        class="batch-progress-summary"
+                        id="progressSummary"
+                    >
+                        Berhasil: 0 · Gagal: 0 · Worker: 3
+                    </div>
+
+                </div>
+
+
+                <div class="batch-panel">
+
+                    <div class="batch-panel-header">
+                        <strong>
+                            Hasil Generate
+                        </strong>
+
+                        <p>
+                            Link PDF tersedia setelah sertifikat berhasil dibuat.
+                        </p>
+                    </div>
+
+                    <div class="batch-table-wrap">
+
+                        <table class="batch-table">
+
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Nama</th>
+                                    <th>Status</th>
+                                    <th>Waktu</th>
+                                    <th>File</th>
+                                    <th>Keterangan</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="resultTableBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <div class="batch-actions">
+
+                    <button
+                        type="button"
+                        class="button secondary"
+                        id="retryButton"
+                        hidden
+                    >
+                        Ulangi yang Gagal
                     </button>
 
                 </div>
@@ -232,15 +534,11 @@
                     class="button primary"
                     id="validateButton"
                 >
-
                     Preview & Validasi Data
-
                     <span>
                         →
                     </span>
-
                 </button>
-
 
                 <p class="action-helper">
                     Data akan divalidasi sebelum proses generate sertifikat dimulai.
@@ -258,14 +556,11 @@
             hidden
         >
 
-            <!-- Overlay -->
             <div
                 class="folder-modal-overlay"
                 id="folderModalOverlay"
             ></div>
 
-
-            <!-- Modal Content -->
             <div
                 class="folder-modal-content"
                 role="dialog"
@@ -273,7 +568,6 @@
                 aria-labelledby="folderModalTitle"
             >
 
-                <!-- Modal Header -->
                 <div class="folder-modal-header">
 
                     <div>
@@ -288,7 +582,6 @@
 
                     </div>
 
-
                     <button
                         type="button"
                         class="folder-close-button"
@@ -301,18 +594,12 @@
                 </div>
 
 
-                <!-- Breadcrumb -->
                 <div
                     class="folder-breadcrumb"
                     id="folderBreadcrumb"
-                >
-
-                    <!-- Breadcrumb akan dibuat oleh JavaScript -->
-
-                </div>
+                ></div>
 
 
-                <!-- Status -->
                 <div
                     class="folder-status"
                     id="folderStatus"
@@ -320,18 +607,12 @@
                 ></div>
 
 
-                <!-- Folder List -->
                 <div
                     class="folder-list"
                     id="folderList"
-                >
-
-                    <!-- Folder akan dimuat melalui JavaScript -->
-
-                </div>
+                ></div>
 
 
-                <!-- Empty State -->
                 <div
                     class="folder-empty"
                     id="folderEmpty"
@@ -342,11 +623,9 @@
                         📂
                     </div>
 
-
                     <strong>
                         Tidak ada subfolder
                     </strong>
-
 
                     <p>
                         Folder ini tidak memiliki subfolder.
@@ -355,7 +634,6 @@
                 </div>
 
 
-                <!-- Modal Footer -->
                 <div class="folder-modal-footer">
 
                     <div class="folder-current">
@@ -364,13 +642,11 @@
                             Folder saat ini:
                         </span>
 
-
                         <strong id="currentFolderName">
                             OneDrive
                         </strong>
 
                     </div>
-
 
                     <button
                         type="button"

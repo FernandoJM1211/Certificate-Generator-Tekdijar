@@ -1,5 +1,29 @@
-const participantName =
-    document.getElementById("participantName");
+const participantNames =
+    document.getElementById("participantNames");
+
+const previewSection =
+    document.getElementById("previewSection");
+
+const previewTableBody =
+    document.getElementById("previewTableBody");
+
+const progressSection =
+    document.getElementById("progressSection");
+
+const progressBar =
+    document.getElementById("progressBar");
+
+const progressText =
+    document.getElementById("progressText");
+
+const progressSummary =
+    document.getElementById("progressSummary");
+
+const resultTableBody =
+    document.getElementById("resultTableBody");
+
+const retryButton =
+    document.getElementById("retryButton");
 
 const templateFile =
     document.getElementById("templateFile");
@@ -670,6 +694,15 @@ chooseCurrentFolder.addEventListener(
             selectedFolderDescription.textContent =
                 "Folder OneDrive telah dipilih sebagai tujuan penyimpanan sertifikat.";
 
+            batchValidated = false;
+
+            validateButton.innerHTML =
+                'Preview & Validasi Data <span>→</span>';
+
+            validateButton.classList.remove(
+                "batch-ready"
+            );
+
         } else {
 
             selectedFolderDescription.textContent =
@@ -750,198 +783,798 @@ function sanitizeFileName(
 }
 
 
+
 /* =========================================
-   Benchmark Helper
+   Batch Processing
 ========================================= */
 
-function createBenchmark() {
+const MAX_WORKERS = 3;
 
-    const startedAt =
-        performance.now();
-
-    const marks = {};
-
-    return {
-
-        mark(name) {
-
-            marks[name] =
-                performance.now();
-
-        },
-
-        duration(start, end) {
-
-            if (
-                marks[start] === undefined
-            ) {
-
-                return 0;
-
-            }
-
-            const endTime =
-                marks[end] !== undefined
-                    ? marks[end]
-                    : performance.now();
-
-            return endTime - marks[start];
-
-        },
-
-        total() {
-
-            return (
-                performance.now() -
-                startedAt
-            );
-
-        },
-
-        report() {
-
-            return {
-
-                "Baca template":
-                    this.duration(
-                        "start",
-                        "template-read"
-                    ),
-
-                "Convert template → Base64":
-                    this.duration(
-                        "template-read",
-                        "base64-ready"
-                    ),
-
-                "Generate PPTX API":
-                    this.duration(
-                        "base64-ready",
-                        "generate-done"
-                    ),
-
-                "Ambil PPTX response":
-                    this.duration(
-                        "generate-done",
-                        "blob-ready"
-                    ),
-
-                "Upload PPTX OneDrive":
-                    this.duration(
-                        "blob-ready",
-                        "upload-done"
-                    ),
-
-                "Convert PPTX → PDF":
-                    this.duration(
-                        "upload-done",
-                        "convert-done"
-                    ),
-
-                "Total":
-                    this.total(),
-
-            };
-
-        },
-
-    };
-
-}
+let batchParticipants = [];
+let batchResults = [];
+let batchRunning = false;
+let templateBase64Cache = null;
+let batchValidated = false;
 
 
 /* =========================================
    Helper: Format Waktu
 ========================================= */
 
-function formatSeconds(
-    milliseconds
-) {
-
-    return `${(
-        milliseconds / 1000
-    ).toFixed(2)} detik`;
-
+function formatSeconds(milliseconds) {
+    return `${(milliseconds / 1000).toFixed(2)} detik`;
 }
 
 
 /* =========================================
-   Generate Sertifikat
+   Helper: Parse Daftar Peserta
+========================================= */
+
+function parseParticipantNames() {
+    return participantNames.value
+        .split(/\r?\n/)
+        .map((name) => name.trim())
+        .filter(Boolean);
+}
+
+
+/* =========================================
+   Helper: Update Progress UI
+========================================= */
+
+function updateProgress() {
+    const total = batchParticipants.length;
+    const finished = batchResults.filter(
+        (item) =>
+            item.status === "SELESAI" ||
+            item.status === "GAGAL"
+    ).length;
+
+    const success = batchResults.filter(
+        (item) => item.status === "SELESAI"
+    ).length;
+
+    const failed = batchResults.filter(
+        (item) => item.status === "GAGAL"
+    ).length;
+
+    const percent =
+        total > 0
+            ? Math.round((finished / total) * 100)
+            : 0;
+
+    progressBar.style.width = `${percent}%`;
+
+    progressText.textContent =
+        `${finished} dari ${total} selesai diproses (${percent}%)`;
+
+    progressSummary.textContent =
+        `Berhasil: ${success} · Gagal: ${failed} · Worker: ${MAX_WORKERS}`;
+}
+
+
+/* =========================================
+   Helper: Render Preview
+========================================= */
+
+function renderPreview(names) {
+    previewTableBody.innerHTML = "";
+
+    names.forEach((name, index) => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td></td>
+        `;
+
+        row.children[1].textContent = name;
+
+        previewTableBody.appendChild(row);
+    });
+
+    previewSection.hidden = false;
+}
+
+
+/* =========================================
+   Helper: Render Result
+========================================= */
+
+function renderResults() {
+    resultTableBody.innerHTML = "";
+
+    batchResults
+        .slice()
+        .sort((a, b) => a.index - b.index)
+        .forEach((result) => {
+            const row = document.createElement("tr");
+
+            const statusClass =
+                result.status === "SELESAI"
+                    ? "success"
+                    : result.status === "GAGAL"
+                        ? "failed"
+                        : "processing";
+
+            row.innerHTML = `
+                <td>${result.index + 1}</td>
+                <td></td>
+                <td>
+                    <span class="batch-status ${statusClass}">
+                        ${result.status}
+                    </span>
+                </td>
+                <td>${result.duration ? formatSeconds(result.duration) : "-"}</td>
+                <td class="batch-link-cell"></td>
+                <td></td>
+            `;
+
+            row.children[1].textContent = result.name;
+
+            if (result.webUrl) {
+                const link = document.createElement("a");
+                link.href = result.webUrl;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = "Buka PDF";
+                row.children[4].appendChild(link);
+            } else {
+                row.children[4].textContent = "-";
+            }
+
+            row.children[5].textContent =
+                result.error || "-";
+
+            resultTableBody.appendChild(row);
+        });
+}
+
+
+/* =========================================
+   Helper: Read Template Once
+========================================= */
+
+async function prepareTemplateBase64() {
+    if (templateBase64Cache) {
+        return templateBase64Cache;
+    }
+
+    const template =
+        templateFile.files[0];
+
+    if (!template) {
+        throw new Error(
+            "Silakan upload template sertifikat terlebih dahulu."
+        );
+    }
+
+    if (
+        !template.name
+            .toLowerCase()
+            .endsWith(".pptx")
+    ) {
+        throw new Error(
+            "Template harus menggunakan format PPTX."
+        );
+    }
+
+    const arrayBuffer =
+        await template.arrayBuffer();
+
+    const bytes =
+        new Uint8Array(arrayBuffer);
+
+    let binary = "";
+
+    const chunkSize = 0x8000;
+
+    for (
+        let i = 0;
+        i < bytes.length;
+        i += chunkSize
+    ) {
+        binary += String.fromCharCode(
+            ...bytes.subarray(
+                i,
+                Math.min(
+                    i + chunkSize,
+                    bytes.length
+                )
+            )
+        );
+    }
+
+    templateBase64Cache =
+        btoa(binary);
+
+    return templateBase64Cache;
+}
+
+
+/* =========================================
+   Reset Template Cache
+========================================= */
+
+templateFile.addEventListener(
+    "change",
+    () => {
+        templateBase64Cache = null;
+        batchValidated = false;
+
+        validateButton.innerHTML =
+            'Preview & Validasi Data <span>→</span>';
+
+        validateButton.classList.remove(
+            "batch-ready"
+        );
+    }
+);
+
+participantNames.addEventListener(
+    "input",
+    () => {
+        batchValidated = false;
+
+        validateButton.innerHTML =
+            'Preview & Validasi Data <span>→</span>';
+
+        validateButton.classList.remove(
+            "batch-ready"
+        );
+    }
+);
+
+
+/* =========================================
+   Generate Satu Sertifikat
+========================================= */
+
+async function generateOneCertificate(
+    participant,
+    templateBase64
+) {
+    const startedAt =
+        performance.now();
+
+    const safeName =
+        sanitizeFileName(
+            participant.name
+        );
+
+    const fileName =
+        `Sertifikat-${safeName}.pptx`;
+
+    /*
+     * 1. Generate PPTX
+     */
+
+    const generateResponse =
+        await fetch(
+            "/api/generate-pptx",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+                },
+
+                body:
+                    JSON.stringify({
+                        nama:
+                            participant.name,
+                        templateBase64,
+                    }),
+            }
+        );
+
+    if (
+        generateResponse.status === 401
+    ) {
+        window.location.href =
+            "/api/auth/login";
+
+        throw new Error(
+            "Session Microsoft kedaluwarsa."
+        );
+    }
+
+    if (
+        !generateResponse.ok
+    ) {
+        let message =
+            "Gagal membuat sertifikat.";
+
+        try {
+            const data =
+                await generateResponse.json();
+
+            message =
+                data.message ||
+                message;
+        } catch {
+            // Response bukan JSON
+        }
+
+        throw new Error(message);
+    }
+
+    /*
+     * 2. Ambil PPTX
+     */
+
+    const generatedBlob =
+        await generateResponse.blob();
+
+    /*
+     * 3. Convert ke Base64
+     */
+
+    const fileBase64 =
+        await blobToBase64(
+            generatedBlob
+        );
+
+    /*
+     * 4. Upload PPTX ke OneDrive
+     */
+
+    const uploadResponse =
+        await fetch(
+            "/api/onedrive/upload",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+                },
+
+                body:
+                    JSON.stringify({
+                        parentId:
+                            selectedFolder.id,
+                        fileName,
+                        fileBase64,
+                    }),
+            }
+        );
+
+    if (
+        uploadResponse.status === 401
+    ) {
+        window.location.href =
+            "/api/auth/login";
+
+        throw new Error(
+            "Session Microsoft kedaluwarsa."
+        );
+    }
+
+    const uploadData =
+        await uploadResponse.json();
+
+    if (
+        !uploadResponse.ok ||
+        !uploadData.success
+    ) {
+        throw new Error(
+            uploadData.message ||
+            "Gagal mengupload sertifikat ke OneDrive."
+        );
+    }
+
+    /*
+     * 5. Convert PPTX → PDF
+     */
+
+    const convertResponse =
+        await fetch(
+            "/api/onedrive/convert-pdf",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+                },
+
+                body:
+                    JSON.stringify({
+                        parentId:
+                            selectedFolder.id,
+                        fileName,
+                        deleteSource:
+                            true,
+                    }),
+            }
+        );
+
+    if (
+        convertResponse.status === 401
+    ) {
+        window.location.href =
+            "/api/auth/login";
+
+        throw new Error(
+            "Session Microsoft kedaluwarsa."
+        );
+    }
+
+    const convertData =
+        await convertResponse.json();
+
+    if (
+        !convertResponse.ok ||
+        !convertData.success
+    ) {
+        throw new Error(
+            convertData.message ||
+            "Gagal mengubah sertifikat menjadi PDF."
+        );
+    }
+
+    return {
+        status: "SELESAI",
+        name: participant.name,
+        index: participant.index,
+        duration:
+            performance.now() -
+            startedAt,
+        webUrl:
+            convertData.pdfFile?.webUrl ||
+            null,
+        fileName:
+            convertData.pdfFile?.name ||
+            fileName.replace(
+                /\.pptx$/i,
+                ".pdf"
+            ),
+        error: null,
+    };
+}
+
+
+/* =========================================
+   Worker Batch
+========================================= */
+
+async function runBatchWorker(
+    workerId,
+    templateBase64,
+    queue
+) {
+    while (true) {
+        const participant =
+            queue.shift();
+
+        if (!participant) {
+            return;
+        }
+
+        /*
+         * Tandai sedang diproses
+         */
+
+        const current =
+            batchResults.find(
+                (item) =>
+                    item.index ===
+                    participant.index
+            );
+
+        if (current) {
+            current.status =
+                "DIPROSES";
+
+            current.startedAt =
+                performance.now();
+
+            renderResults();
+        }
+
+        try {
+            const result =
+                await generateOneCertificate(
+                    participant,
+                    templateBase64
+                );
+
+            const target =
+                batchResults.find(
+                    (item) =>
+                        item.index ===
+                        participant.index
+                );
+
+            if (target) {
+                Object.assign(
+                    target,
+                    result
+                );
+            }
+
+            console.log(
+                `[Worker ${workerId}] ${participant.name} selesai dalam ${formatSeconds(result.duration)}`
+            );
+
+        } catch (error) {
+            const target =
+                batchResults.find(
+                    (item) =>
+                        item.index ===
+                        participant.index
+                );
+
+            if (target) {
+                target.status =
+                    "GAGAL";
+
+                target.error =
+                    error.message ||
+                    "Gagal memproses sertifikat.";
+
+                target.duration =
+                    performance.now() -
+                    target.startedAt;
+            }
+
+            console.error(
+                `[Worker ${workerId}] ${participant.name} gagal:`,
+                error
+            );
+        }
+
+        updateProgress();
+        renderResults();
+    }
+}
+
+
+/* =========================================
+   Jalankan Batch
+========================================= */
+
+async function startBatch(
+    onlyFailed = false
+) {
+    if (batchRunning) {
+        return;
+    }
+
+    if (!selectedFolder) {
+        alert(
+            "Silakan pilih folder OneDrive terlebih dahulu."
+        );
+        return;
+    }
+
+    if (!batchParticipants.length) {
+        alert(
+            "Belum ada peserta yang divalidasi."
+        );
+        return;
+    }
+
+    batchRunning = true;
+
+    validateButton.disabled = true;
+    retryButton.disabled = true;
+
+    progressSection.hidden = false;
+
+    try {
+        validateButton.innerHTML =
+            "Menyiapkan template...";
+
+        const templateBase64 =
+            await prepareTemplateBase64();
+
+        let queue =
+            batchParticipants.slice();
+
+        if (onlyFailed) {
+            queue =
+                queue.filter(
+                    (participant) => {
+                        const result =
+                            batchResults.find(
+                                (item) =>
+                                    item.index ===
+                                    participant.index
+                            );
+
+                        return (
+                            result &&
+                            result.status ===
+                                "GAGAL"
+                        );
+                    }
+                );
+        }
+
+        if (!queue.length) {
+            alert(
+                "Tidak ada sertifikat gagal yang perlu diulang."
+            );
+            return;
+        }
+
+        /*
+         * Reset status peserta yang akan
+         * diproses ulang.
+         */
+
+        queue.forEach(
+            (participant) => {
+                const result =
+                    batchResults.find(
+                        (item) =>
+                            item.index ===
+                            participant.index
+                    );
+
+                if (result) {
+                    result.status =
+                        "DIPROSES";
+
+                    result.error =
+                        null;
+
+                    result.webUrl =
+                        null;
+                }
+            }
+        );
+
+        updateProgress();
+        renderResults();
+
+        validateButton.innerHTML =
+            `Memproses ${queue.length} peserta...`;
+
+        const workers = [];
+
+        const workerCount =
+            Math.min(
+                MAX_WORKERS,
+                queue.length
+            );
+
+        for (
+            let i = 0;
+            i < workerCount;
+            i++
+        ) {
+            workers.push(
+                runBatchWorker(
+                    i + 1,
+                    templateBase64,
+                    queue
+                )
+            );
+        }
+
+        await Promise.all(
+            workers
+        );
+
+        updateProgress();
+        renderResults();
+
+        const successCount =
+            batchResults.filter(
+                (item) =>
+                    item.status ===
+                    "SELESAI"
+            ).length;
+
+        const failedCount =
+            batchResults.filter(
+                (item) =>
+                    item.status ===
+                    "GAGAL"
+            ).length;
+
+        retryButton.hidden =
+            failedCount === 0;
+
+        alert(
+            `✓ Batch selesai.\n\n` +
+            `Berhasil: ${successCount}\n` +
+            `Gagal: ${failedCount}\n` +
+            `Worker: ${workerCount}`
+        );
+
+    } catch (error) {
+        console.error(
+            "Batch error:",
+            error
+        );
+
+        alert(
+            `Batch gagal dijalankan.\n\n${error.message}`
+        );
+
+    } finally {
+        batchRunning = false;
+
+        validateButton.disabled =
+            false;
+
+        retryButton.disabled =
+            false;
+
+        validateButton.innerHTML =
+            "Mulai Generate Sertifikat";
+    }
+}
+
+
+/* =========================================
+   Preview & Validasi Data
 ========================================= */
 
 validateButton.addEventListener(
     "click",
     async () => {
+        if (batchRunning) {
+            return;
+        }
 
-        const benchmark =
-            createBenchmark();
+        if (batchValidated) {
+            await startBatch(false);
+            return;
+        }
 
-        benchmark.mark("start");
+        const names =
+            parseParticipantNames();
 
         const template =
             templateFile.files[0];
-
-        const nama =
-            participantName.value.trim();
-
 
         /*
          * Validasi template
          */
 
         if (!template) {
-
             alert(
                 "Silakan upload template sertifikat terlebih dahulu."
             );
-
             return;
-
         }
-
-
-        /*
-         * Validasi format file
-         */
 
         if (
             !template.name
                 .toLowerCase()
                 .endsWith(".pptx")
         ) {
-
             alert(
                 "Template harus menggunakan format PPTX."
             );
-
             return;
-
         }
-
 
         /*
          * Validasi nama peserta
          */
 
-        if (!nama) {
-
+        if (!names.length) {
             alert(
-                "Silakan masukkan nama peserta."
+                "Masukkan minimal satu nama peserta."
             );
 
-            participantName.focus();
+            participantNames.focus();
 
             return;
-
         }
-
 
         /*
          * Validasi folder
          */
 
         if (!selectedFolder) {
-
             alert(
                 "Silakan pilih folder OneDrive terlebih dahulu."
             );
@@ -949,396 +1582,98 @@ validateButton.addEventListener(
             selectDriveFolder.focus();
 
             return;
-
         }
 
+        /*
+         * Batasi nama duplikat
+         */
 
-        try {
+        const normalized =
+            new Set();
 
-            /*
-             * Disable tombol
-             */
+        const duplicates = [];
 
-            validateButton.disabled =
-                true;
+        names.forEach(
+            (name) => {
+                const key =
+                    name.toLowerCase();
 
-
-            /*
-             * =====================================
-             * STEP 1
-             * Membuat sertifikat
-             * =====================================
-             */
-
-            validateButton.innerHTML =
-                "Membuat sertifikat...";
-
-
-            /*
-             * Baca file PPTX
-             */
-
-            const arrayBuffer =
-                await template.arrayBuffer();
-
-            benchmark.mark(
-                "template-read"
-            );
-
-
-            /*
-             * Convert ArrayBuffer → Base64
-             */
-
-            const bytes =
-                new Uint8Array(
-                    arrayBuffer
-                );
-
-            let binary = "";
-
-
-            for (
-                let i = 0;
-                i < bytes.length;
-                i++
-            ) {
-
-                binary +=
-                    String.fromCharCode(
-                        bytes[i]
-                    );
-
-            }
-
-
-            const templateBase64 =
-                btoa(binary);
-
-            benchmark.mark(
-                "base64-ready"
-            );
-
-
-            /*
-             * Kirim template dan nama
-             * ke API generate-pptx
-             */
-
-            const generateResponse =
-                await fetch(
-                    "/api/generate-pptx",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-                        },
-
-                        body:
-                            JSON.stringify({
-                                nama,
-                                templateBase64,
-                            }),
-                    }
-                );
-
-
-            /*
-             * Cek response generate
-             */
-
-            if (
-                !generateResponse.ok
-            ) {
-
-                let message =
-                    "Gagal membuat sertifikat.";
-
-                try {
-
-                    const data =
-                        await generateResponse.json();
-
-                    message =
-                        data.message ||
-                        message;
-
-                } catch {
-
-                    // Response bukan JSON
-
+                if (
+                    normalized.has(key)
+                ) {
+                    duplicates.push(name);
                 }
 
-                throw new Error(
-                    message
-                );
-
+                normalized.add(key);
             }
+        );
 
-            benchmark.mark(
-                "generate-done"
-            );
-
-
-            /*
-             * =====================================
-             * STEP 2
-             * Ambil PPTX hasil generate
-             * =====================================
-             */
-
-            validateButton.innerHTML =
-                "Menyiapkan file...";
-
-
-            const generatedBlob =
-                await generateResponse.blob();
-
-            benchmark.mark(
-                "blob-ready"
-            );
-
-
-            /*
-             * =====================================
-             * STEP 3
-             * Convert PPTX → Base64
-             * =====================================
-             */
-
-            validateButton.innerHTML =
-                "Mengupload ke OneDrive...";
-
-
-            const fileBase64 =
-                await blobToBase64(
-                    generatedBlob
-                );
-
-
-            /*
-             * Nama file sertifikat
-             */
-
-            const safeName =
-                sanitizeFileName(
-                    nama
-                );
-
-            const fileName =
-                `Sertifikat-${safeName}.pptx`;
-
-
-            /*
-             * =====================================
-             * STEP 4
-             * Upload ke OneDrive
-             * =====================================
-             */
-
-            const uploadResponse =
-                await fetch(
-                    "/api/onedrive/upload",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                parentId:
-                                    selectedFolder.id,
-
-                                fileName,
-
-                                fileBase64,
-
-                            }),
-
-                    }
-                );
-
-
-            const uploadData =
-                await uploadResponse.json();
-
-
-            if (
-                !uploadResponse.ok
-            ) {
-
-                throw new Error(
-                    uploadData.message ||
-                    "Gagal mengupload sertifikat ke OneDrive."
-                );
-
-            }
-
-            benchmark.mark(
-                "upload-done"
-            );
-
-
-            /*
-             * =====================================
-             * STEP 5
-             * Convert PPTX → PDF
-             * =====================================
-             */
-
-            validateButton.innerHTML =
-                "Mengubah ke PDF...";
-
-
-            const convertResponse =
-                await fetch(
-                    "/api/onedrive/convert-pdf",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                parentId:
-                                    selectedFolder.id,
-
-                                fileName,
-
-                                deleteSource:
-                                    true,
-
-                            }),
-
-                    }
-                );
-
-
-            const convertData =
-                await convertResponse.json();
-
-
-            if (
-                !convertResponse.ok
-            ) {
-
-                throw new Error(
-                    convertData.message ||
-                    "Gagal mengubah sertifikat menjadi PDF."
-                );
-
-            }
-
-            benchmark.mark(
-                "convert-done"
-            );
-
-
-            /*
-             * =====================================
-             * STEP 6
-             * Selesai
-             * =====================================
-             */
-
-            const pdfFile =
-                convertData.pdfFile;
-
-
-            const benchmarkReport =
-                benchmark.report();
-
-
-            /*
-             * Tampilkan hasil benchmark
-             * di Console Browser
-             */
-
-            console.group(
-                "Certificate Generator Benchmark"
-            );
-
-            console.table(
-                Object.fromEntries(
-                    Object.entries(
-                        benchmarkReport
-                    ).map(
-                        ([key, value]) => [
-                            key,
-                            formatSeconds(value),
-                        ]
-                    )
-                )
-            );
-
-            console.groupEnd();
-
-
-            /*
-             * Alert sukses
-             */
-
+        if (duplicates.length) {
             alert(
-                `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
-                `File: ${pdfFile.name}\n` +
-                `Folder: ${selectedFolder.name}\n` +
-                `Format: PDF\n` +
-                `Waktu proses: ${formatSeconds(
-                    benchmarkReport.Total
-                )}`
+                "Terdapat nama peserta yang duplikat:\n\n" +
+                duplicates.join("\n") +
+                "\n\nSilakan hapus duplikat sebelum melanjutkan."
             );
 
-
-            /*
-             * Buka PDF
-             */
-
-            if (
-                pdfFile.webUrl
-            ) {
-
-                window.open(
-                    pdfFile.webUrl,
-                    "_blank"
-                );
-
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                "Generate certificate error:",
-                error
-            );
-
-            alert(
-                `Gagal membuat sertifikat.\n\n${error.message}`
-            );
-
-        } finally {
-
-            /*
-             * Aktifkan kembali tombol
-             */
-
-            validateButton.disabled =
-                false;
-
-            validateButton.innerHTML =
-                "Buat Sertifikat";
-
+            return;
         }
 
+        batchParticipants =
+            names.map(
+                (name, index) => ({
+                    name,
+                    index,
+                })
+            );
+
+        batchResults =
+            batchParticipants.map(
+                (participant) => ({
+                    index:
+                        participant.index,
+                    name:
+                        participant.name,
+                    status:
+                        "BELUM",
+                    duration: null,
+                    webUrl: null,
+                    error: null,
+                    startedAt: null,
+                })
+            );
+
+        renderPreview(
+            names
+        );
+
+        renderResults();
+        updateProgress();
+
+        progressSection.hidden =
+            false;
+
+        retryButton.hidden =
+            true;
+
+        validateButton.innerHTML =
+            "Mulai Generate Sertifikat";
+
+        batchValidated = true;
+
+        validateButton.classList.add(
+            "batch-ready"
+        );
+    }
+);
+
+
+/* =========================================
+   Retry Peserta Gagal
+========================================= */
+
+retryButton.addEventListener(
+    "click",
+    async () => {
+        await startBatch(true);
     }
 );
