@@ -1,0 +1,10 @@
+node_modules/
+
+*.pptx
+
+test-pptx.js
+
+.env
+.env.local
+
+.DS_Store

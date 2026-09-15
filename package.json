@@ -1,0 +1,27 @@
+{
+  "name": "certificate-generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FernandoJM1211/Certificate-Generator-Tekdijar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/FernandoJM1211/Certificate-Generator-Tekdijar/issues"
+  },
+  "homepage": "https://github.com/FernandoJM1211/Certificate-Generator-Tekdijar#readme",
+  "dependencies": {
+    "jszip": "^3.10.2"
+  }
+}
