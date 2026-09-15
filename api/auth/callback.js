@@ -8,6 +8,10 @@ const {
     verifyState,
 } = require("../../lib/oauth-state");
 
+const {
+    createSessionCookie,
+} = require("../../lib/session");
+
 function parseCookies(cookieHeader) {
     const cookies = {};
 
@@ -16,13 +20,16 @@ function parseCookies(cookieHeader) {
     }
 
     cookieHeader.split(";").forEach((cookie) => {
-        const [name, ...rest] = cookie.trim().split("=");
+        const [name, ...rest] =
+            cookie.trim().split("=");
 
         if (!name) {
             return;
         }
 
-        cookies[name] = decodeURIComponent(rest.join("="));
+        cookies[name] = decodeURIComponent(
+            rest.join("=")
+        );
     });
 
     return cookies;
@@ -34,7 +41,9 @@ function clearStateCookie() {
 
 module.exports = async function handler(req, res) {
     if (req.method !== "GET") {
-        return res.status(405).send("Method tidak diizinkan.");
+        return res.status(405).send(
+            "Method tidak diizinkan."
+        );
     }
 
     try {
@@ -59,7 +68,11 @@ module.exports = async function handler(req, res) {
 
             return res.status(400).send(`
                 <h1>Login Microsoft gagal</h1>
-                <p>${error_description || error}</p>
+
+                <p>
+                    ${error_description || error}
+                </p>
+
                 <p>
                     <a href="/">
                         Kembali ke Certificate Generator
@@ -72,7 +85,8 @@ module.exports = async function handler(req, res) {
             req.headers.cookie
         );
 
-        const storedState = cookies.oauth_state;
+        const storedState =
+            cookies.oauth_state;
 
         if (
             !state ||
@@ -82,7 +96,11 @@ module.exports = async function handler(req, res) {
         ) {
             return res.status(400).send(`
                 <h1>OAuth State tidak valid</h1>
-                <p>Silakan ulangi proses login.</p>
+
+                <p>
+                    Silakan ulangi proses login.
+                </p>
+
                 <p>
                     <a href="/">
                         Kembali ke Certificate Generator
@@ -97,7 +115,8 @@ module.exports = async function handler(req, res) {
             );
         }
 
-        const msalClient = getMsalClient();
+        const msalClient =
+            getMsalClient();
 
         const tokenResponse =
             await msalClient.acquireTokenByCode({
@@ -112,53 +131,56 @@ module.exports = async function handler(req, res) {
             );
         }
 
-        res.setHeader(
-            "Set-Cookie",
-            clearStateCookie()
-        );
-
         const username =
             tokenResponse.account?.username ||
             "Akun Microsoft";
 
-        // Access token digunakan untuk mengakses Microsoft Graph.
-        // Token tidak ditampilkan atau dikirim ke browser.
         const accessToken =
             tokenResponse.accessToken;
 
-        // Test akses OneDrive melalui Microsoft Graph.
-        const graphResponse = await fetch(
-            "https://graph.microsoft.com/v1.0/me/drive",
-            {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            }
-        );
-
-        const graphData =
-            await graphResponse.json();
-
-        if (!graphResponse.ok) {
-            console.error(
-                "Microsoft Graph error:",
-                graphResponse.status,
-                graphData
-            );
-
+        if (!accessToken) {
             throw new Error(
-                graphData.error?.message ||
-                "Gagal mengakses OneDrive."
+                "Access token Microsoft tidak ditemukan."
             );
         }
 
-        const driveName =
-            graphData.name ||
-            "OneDrive";
+        /*
+         * Access token hanya disimpan sementara
+         * dalam session cookie terenkripsi.
+         *
+         * Token tidak ditampilkan ke browser,
+         * tidak ditulis ke log, dan tidak disimpan
+         * di Google Spreadsheet.
+         */
+        const expiresOn =
+            tokenResponse.expiresOn
+                ? new Date(
+                      tokenResponse.expiresOn
+                  ).getTime()
+                : Date.now() + 60 * 60 * 1000;
+
+        const sessionCookie =
+            createSessionCookie({
+                username,
+                accessToken,
+                expiresAt: expiresOn,
+            });
+
+        /*
+         * Hapus OAuth state cookie dan
+         * buat session cookie.
+         */
+        res.setHeader(
+            "Set-Cookie",
+            [
+                clearStateCookie(),
+                sessionCookie,
+            ]
+        );
 
         return res.status(200).send(`
             <!DOCTYPE html>
+
             <html lang="id">
 
             <head>
@@ -170,7 +192,7 @@ module.exports = async function handler(req, res) {
                 >
 
                 <title>
-                    OneDrive Berhasil Terhubung
+                    Login Berhasil
                 </title>
 
                 <style>
@@ -207,7 +229,7 @@ module.exports = async function handler(req, res) {
                 <div class="success">
 
                     <h1>
-                        ✓ OneDrive Berhasil Terhubung
+                        ✓ Login Microsoft Berhasil
                     </h1>
 
                     <div class="item">
@@ -220,20 +242,14 @@ module.exports = async function handler(req, res) {
                         ${username}
                     </div>
 
-                    <div class="item">
-                        <strong>
-                            OneDrive
-                        </strong>
-
-                        <br>
-
-                        ${driveName}
-                    </div>
+                    <p>
+                        Session Microsoft berhasil dibuat.
+                    </p>
 
                     <p>
-                        Microsoft Graph berhasil mengakses
-                        OneDrive menggunakan access token
-                        aplikasi.
+                        Aplikasi sekarang dapat menggunakan
+                        Microsoft Graph untuk mengakses
+                        OneDrive.
                     </p>
 
                 </div>
@@ -248,13 +264,16 @@ module.exports = async function handler(req, res) {
         `);
 
     } catch (error) {
+
         console.error(
             "Microsoft callback error:",
             error
         );
 
         return res.status(500).send(`
-            <h1>Login Microsoft gagal</h1>
+            <h1>
+                Login Microsoft gagal
+            </h1>
 
             <p>
                 ${error.message}
