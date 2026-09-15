@@ -190,22 +190,18 @@ async function loadFolder(
 
     }
 
-
     showFolderStatus(
         "Memuat folder OneDrive..."
     );
-
 
     folderList.innerHTML = "";
 
     folderEmpty.hidden = true;
 
-
     try {
 
         let url =
             "/api/onedrive/folders";
-
 
         if (parentId) {
 
@@ -216,10 +212,8 @@ async function loadFolder(
 
         }
 
-
         const response =
             await fetch(url);
-
 
         /*
          * Jika session Microsoft sudah
@@ -234,10 +228,8 @@ async function loadFolder(
 
         }
 
-
         const data =
             await response.json();
-
 
         if (!response.ok) {
 
@@ -248,19 +240,16 @@ async function loadFolder(
 
         }
 
-
         currentFolder = {
             id: parentId || null,
             name: folderName,
         };
-
 
         if (resetStack) {
 
             folderStack = [];
 
         }
-
 
         hideFolderStatus();
 
@@ -270,10 +259,8 @@ async function loadFolder(
             data.folders || []
         );
 
-
         currentFolderName.textContent =
             currentFolder.name;
-
 
     } catch (error) {
 
@@ -281,7 +268,6 @@ async function loadFolder(
             "Folder picker error:",
             error
         );
-
 
         showFolderStatus(
             error.message ||
@@ -304,10 +290,8 @@ function renderFolders(
 
     folderList.innerHTML = "";
 
-
     folderEmpty.hidden =
         folders.length !== 0;
-
 
     folders.forEach(
         (folder) => {
@@ -321,7 +305,6 @@ function renderFolders(
 
             button.className =
                 "folder-item";
-
 
             /*
              * Icon folder
@@ -337,7 +320,6 @@ function renderFolders(
             icon.textContent =
                 "📁";
 
-
             /*
              * Informasi folder
              */
@@ -348,7 +330,6 @@ function renderFolders(
 
             info.className =
                 "folder-info";
-
 
             const name =
                 document.createElement(
@@ -361,7 +342,6 @@ function renderFolders(
             name.textContent =
                 folder.name;
 
-
             const meta =
                 document.createElement(
                     "span"
@@ -369,7 +349,6 @@ function renderFolders(
 
             meta.className =
                 "folder-meta";
-
 
             if (
                 folder.childCount > 0
@@ -385,11 +364,9 @@ function renderFolders(
 
             }
 
-
             info.appendChild(name);
 
             info.appendChild(meta);
-
 
             /*
              * Arrow
@@ -405,13 +382,11 @@ function renderFolders(
             arrow.textContent =
                 "›";
 
-
             button.appendChild(icon);
 
             button.appendChild(info);
 
             button.appendChild(arrow);
-
 
             /*
              * Klik folder
@@ -425,7 +400,6 @@ function renderFolders(
                         name: currentFolder.name,
                     });
 
-
                     await loadFolder(
                         folder.id,
                         folder.name
@@ -433,7 +407,6 @@ function renderFolders(
 
                 }
             );
-
 
             folderList.appendChild(
                 button
@@ -453,7 +426,6 @@ function renderBreadcrumb() {
 
     folderBreadcrumb.innerHTML = "";
 
-
     /*
      * Root OneDrive
      */
@@ -470,7 +442,6 @@ function renderBreadcrumb() {
     rootButton.textContent =
         "OneDrive";
 
-
     if (
         currentFolder.id === null
     ) {
@@ -480,7 +451,6 @@ function renderBreadcrumb() {
         );
 
     }
-
 
     rootButton.addEventListener(
         "click",
@@ -494,7 +464,6 @@ function renderBreadcrumb() {
 
             }
 
-
             await loadFolder(
                 null,
                 "OneDrive",
@@ -504,11 +473,9 @@ function renderBreadcrumb() {
         }
     );
 
-
     folderBreadcrumb.appendChild(
         rootButton
     );
-
 
     /*
      * Folder sebelumnya
@@ -529,7 +496,6 @@ function renderBreadcrumb() {
 
             }
 
-
             const separator =
                 document.createElement(
                     "span"
@@ -541,11 +507,9 @@ function renderBreadcrumb() {
             separator.textContent =
                 "/";
 
-
             folderBreadcrumb.appendChild(
                 separator
             );
-
 
             const button =
                 document.createElement(
@@ -560,7 +524,6 @@ function renderBreadcrumb() {
             button.textContent =
                 folder.name;
 
-
             /*
              * Klik breadcrumb
              */
@@ -570,7 +533,6 @@ function renderBreadcrumb() {
 
                     const targetFolder =
                         folderStack[index];
-
 
                     /*
                      * Potong stack setelah
@@ -582,7 +544,6 @@ function renderBreadcrumb() {
                             index
                         );
 
-
                     await loadFolder(
                         targetFolder.id,
                         targetFolder.name
@@ -591,14 +552,12 @@ function renderBreadcrumb() {
                 }
             );
 
-
             folderBreadcrumb.appendChild(
                 button
             );
 
         }
     );
-
 
     /*
      * Tampilkan folder yang sedang aktif
@@ -618,11 +577,9 @@ function renderBreadcrumb() {
         separator.textContent =
             "/";
 
-
         folderBreadcrumb.appendChild(
             separator
         );
-
 
         const currentButton =
             document.createElement(
@@ -636,7 +593,6 @@ function renderBreadcrumb() {
 
         currentButton.textContent =
             currentFolder.name;
-
 
         folderBreadcrumb.appendChild(
             currentButton
@@ -695,10 +651,8 @@ chooseCurrentFolder.addEventListener(
             name: currentFolder.name,
         };
 
-
         selectedFolderName.textContent =
             selectedFolder.name;
-
 
         if (
             selectedFolder.id
@@ -714,11 +668,76 @@ chooseCurrentFolder.addEventListener(
 
         }
 
-
         closeFolderPicker();
 
     }
 );
+
+
+/* =========================================
+   Helper: Convert Blob → Base64
+========================================= */
+
+function blobToBase64(blob) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const reader =
+                new FileReader();
+
+            reader.onload = () => {
+
+                const result =
+                    reader.result;
+
+                /*
+                 * Hasil FileReader berupa:
+                 *
+                 * data:application/...;base64,XXXXX
+                 *
+                 * Kita hanya mengambil bagian
+                 * setelah koma.
+                 */
+                const base64 =
+                    result.split(",")[1];
+
+                resolve(base64);
+
+            };
+
+            reader.onerror = () => {
+
+                reject(
+                    new Error(
+                        "Gagal mengubah file menjadi Base64."
+                    )
+                );
+
+            };
+
+            reader.readAsDataURL(blob);
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   Helper: Bersihkan Nama File
+========================================= */
+
+function sanitizeFileName(
+    name
+) {
+
+    return name
+        .replace(/[<>:"/\\|?*]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+}
 
 
 /* =========================================
@@ -799,11 +818,18 @@ validateButton.addEventListener(
         try {
 
             /*
-             * Ubah status tombol
+             * Disable tombol
              */
             validateButton.disabled =
                 true;
 
+
+            /*
+             * =====================================
+             * STEP 1
+             * Membuat sertifikat
+             * =====================================
+             */
             validateButton.innerHTML =
                 "Membuat sertifikat...";
 
@@ -848,7 +874,7 @@ validateButton.addEventListener(
              * Kirim template dan nama
              * ke API generate-pptx
              */
-            const response =
+            const generateResponse =
                 await fetch(
                     "/api/generate-pptx",
                     {
@@ -859,27 +885,29 @@ validateButton.addEventListener(
                                 "application/json",
                         },
 
-                        body: JSON.stringify({
-                            nama,
-                            templateBase64,
-                        }),
+                        body:
+                            JSON.stringify({
+                                nama,
+                                templateBase64,
+                            }),
                     }
                 );
 
 
             /*
-             * Cek response API
+             * Cek response generate
              */
-            if (!response.ok) {
+            if (
+                !generateResponse.ok
+            ) {
 
                 let message =
                     "Gagal membuat sertifikat.";
 
-
                 try {
 
                     const data =
-                        await response.json();
+                        await generateResponse.json();
 
                     message =
                         data.message ||
@@ -891,7 +919,6 @@ validateButton.addEventListener(
 
                 }
 
-
                 throw new Error(
                     message
                 );
@@ -900,58 +927,157 @@ validateButton.addEventListener(
 
 
             /*
-             * Ambil file hasil dari API
+             * =====================================
+             * STEP 2
+             * Ambil PPTX hasil generate
+             * =====================================
              */
-            const blob =
-                await response.blob();
+
+            validateButton.innerHTML =
+                "Menyiapkan file...";
+
+
+            const generatedBlob =
+                await generateResponse.blob();
 
 
             /*
-             * Buat URL sementara
+             * =====================================
+             * STEP 3
+             * Convert PPTX → Base64
+             * =====================================
              */
-            const url =
-                URL.createObjectURL(
-                    blob
+
+            validateButton.innerHTML =
+                "Mengupload ke OneDrive...";
+
+
+            const fileBase64 =
+                await blobToBase64(
+                    generatedBlob
                 );
 
 
             /*
-             * Buat link download
+             * Nama file sertifikat
              */
-            const link =
-                document.createElement(
-                    "a"
+            const safeName =
+                sanitizeFileName(
+                    nama
                 );
 
-            link.href = url;
-
-            link.download =
-                `Sertifikat-${nama}.pptx`;
-
-
-            document.body.appendChild(
-                link
-            );
-
-            link.click();
-
-            link.remove();
+            const fileName =
+                `Sertifikat-${safeName}.pptx`;
 
 
             /*
-             * Hapus URL sementara
+             * =====================================
+             * STEP 4
+             * Upload ke OneDrive
+             * =====================================
              */
-            URL.revokeObjectURL(
-                url
-            );
+
+            const uploadResponse =
+                await fetch(
+                    "/api/onedrive/upload",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                parentId:
+                                    selectedFolder.id,
+
+                                fileName,
+
+                                fileBase64,
+
+                            }),
+                    }
+                );
 
 
             /*
-             * Informasi ke user
+             * Jika session Microsoft
+             * sudah expired
              */
-            alert(
-                "✓ Sertifikat berhasil dibuat."
-            );
+            if (
+                uploadResponse.status === 401
+            ) {
+
+                window.location.href =
+                    "/api/auth/login";
+
+                return;
+
+            }
+
+
+            /*
+             * Ambil response upload
+             */
+            const uploadData =
+                await uploadResponse.json();
+
+
+            /*
+             * Cek upload
+             */
+            if (
+                !uploadResponse.ok ||
+                !uploadData.success
+            ) {
+
+                throw new Error(
+                    uploadData.message ||
+                    "Gagal mengupload sertifikat ke OneDrive."
+                );
+
+            }
+
+
+            /*
+             * =====================================
+             * STEP 5
+             * Upload berhasil
+             * =====================================
+             */
+
+            const webUrl =
+                uploadData.file?.webUrl;
+
+
+            if (webUrl) {
+
+                alert(
+                    `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
+                    `File: ${uploadData.file.name}\n\n` +
+                    `Folder: ${selectedFolder.name}`
+                );
+
+                /*
+                 * Buka file OneDrive
+                 * pada tab baru
+                 */
+                window.open(
+                    webUrl,
+                    "_blank"
+                );
+
+            } else {
+
+                alert(
+                    `✓ Sertifikat berhasil dibuat dan diupload ke OneDrive.\n\n` +
+                    `File: ${uploadData.file?.name || fileName}`
+                );
+
+            }
 
 
         } catch (error) {
