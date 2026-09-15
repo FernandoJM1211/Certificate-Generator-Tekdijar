@@ -3,17 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Certificate Generator</title>
+    <meta
+        name="description"
+        content="Generate sertifikat peserta secara otomatis."
+    >
 
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-    <main>
-        <h1>Certificate Generator</h1>
-        <p>Generate sertifikat peserta secara otomatis.</p>
-    </main>
+    <div class="app">
+
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <p class="eyebrow">TEKDIJAR</p>
+                <h1>Certificate Generator</h1>
+                <p class="subtitle">
+                    Generate dan distribusikan sertifikat peserta secara otomatis.
+                </p>
+            </div>
+        </header>
+
+
+        <!-- Main -->
+        <main class="main">
+
+            <!-- Step 1 -->
+            <section class="card">
+
+                <div class="section-header">
+                    <div class="step-number">01</div>
+
+                    <div>
+                        <h2>Template Sertifikat</h2>
+                        <p>
+                            Upload template sertifikat yang akan digunakan.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="upload-area" id="templateUploadArea">
+
+                    <div class="upload-icon">
+                        📄
+                    </div>
+
+                    <h3>Upload template sertifikat</h3>
+
+                    <p>
+                        Gunakan file DOCX dengan placeholder
+                        <code>{{NAMA}}</code>
+                    </p>
+
+                    <label class="button secondary" for="templateFile">
+                        Pilih File
+                    </label>
+
+                    <input
+                        type="file"
+                        id="templateFile"
+                        accept=".docx"
+                        hidden
+                    >
+
+                    <div
+                        class="file-info"
+                        id="templateFileInfo"
+                        hidden
+                    ></div>
+
+                </div>
+
+            </section>
+
+
+            <!-- Step 2 -->
+            <section class="card">
+
+                <div class="section-header">
+                    <div class="step-number">02</div>
+
+                    <div>
+                        <h2>Data Peserta</h2>
+                        <p>
+                            Hubungkan Google Spreadsheet yang berisi data peserta.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+
+                    <label for="spreadsheetUrl">
+                        Link Google Spreadsheet
+                    </label>
+
+                    <input
+                        type="url"
+                        id="spreadsheetUrl"
+                        class="input"
+                        placeholder="https://docs.google.com/spreadsheets/..."
+                    >
+
+                    <p class="helper">
+                        Pastikan spreadsheet memiliki kolom Nama Peserta.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- Step 3 -->
+            <section class="card">
+
+                <div class="section-header">
+                    <div class="step-number">03</div>
+
+                    <div>
+                        <h2>Folder Penyimpanan</h2>
+                        <p>
+                            Tentukan folder Google Drive untuk menyimpan sertifikat.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="drive-placeholder">
+
+                    <div class="drive-icon">
+                        📁
+                    </div>
+
+                    <div class="drive-content">
+
+                        <strong>Folder Google Drive</strong>
+
+                        <p>
+                            Sertifikat yang berhasil dibuat akan
+                            otomatis diupload ke folder ini.
+                        </p>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="button secondary"
+                        id="selectDriveFolder"
+                    >
+                        Pilih Folder
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- Action -->
+            <section class="action-section">
+
+                <button
+                    type="button"
+                    class="button primary"
+                    id="validateButton"
+                >
+                    Preview & Validasi Data
+                    <span>→</span>
+                </button>
+
+                <p class="action-helper">
+                    Data akan divalidasi sebelum proses generate sertifikat dimulai.
+                </p>
+
+            </section>
+
+        </main>
+
+
+        <!-- Footer -->
+        <footer class="footer">
+            Certificate Generator · Direktorat Teknologi dan Digitalisasi Pembelajaran
+        </footer>
+
+    </div>
 
     <script src="js/app.js"></script>
+
 </body>
 </html>
