@@ -245,10 +245,10 @@ async function loadFolder(
          */
 
         if (response.status === 401) {
-
-            window.location.href =
-                "/api/auth/login";
-
+            showFolderStatus(
+                "Session Microsoft tidak tersedia. Silakan login Microsoft terlebih dahulu.",
+                true
+            );
             return;
         }
 
@@ -1069,14 +1069,20 @@ async function generateOneCertificate(
             }
         );
 
-    if (
-        generateResponse.status === 401
-    ) {
-        window.location.href =
-            "/api/auth/login";
+    if (generateResponse.status === 401) {
+        let data = null;
+
+        try {
+            data = await generateResponse.json();
+        } catch {
+            // Response bukan JSON
+        }
 
         throw new Error(
-            "Session Microsoft kedaluwarsa."
+            `[GENERATE] ${
+                data?.message ||
+                "Session Microsoft tidak tersedia."
+            }`
         );
     }
 
@@ -1141,27 +1147,27 @@ async function generateOneCertificate(
             }
         );
 
-    if (
-        uploadResponse.status === 401
-    ) {
-        window.location.href =
-            "/api/auth/login";
-
-        throw new Error(
-            "Session Microsoft kedaluwarsa."
-        );
-    }
-
     const uploadData =
         await uploadResponse.json();
+
+    if (uploadResponse.status === 401) {
+        throw new Error(
+            `[UPLOAD] ${
+                uploadData?.message ||
+                "Session Microsoft tidak tersedia."
+            }`
+        );
+    }
 
     if (
         !uploadResponse.ok ||
         !uploadData.success
     ) {
         throw new Error(
-            uploadData.message ||
-            "Gagal mengupload sertifikat ke OneDrive."
+            `[UPLOAD] ${
+                uploadData?.message ||
+                "Gagal mengupload sertifikat ke OneDrive."
+            }`
         );
     }
 
@@ -1191,27 +1197,27 @@ async function generateOneCertificate(
             }
         );
 
-    if (
-        convertResponse.status === 401
-    ) {
-        window.location.href =
-            "/api/auth/login";
-
-        throw new Error(
-            "Session Microsoft kedaluwarsa."
-        );
-    }
-
     const convertData =
         await convertResponse.json();
+
+    if (convertResponse.status === 401) {
+        throw new Error(
+            `[CONVERT] ${
+                convertData?.message ||
+                "Session Microsoft tidak tersedia."
+            }`
+        );
+    }
 
     if (
         !convertResponse.ok ||
         !convertData.success
     ) {
         throw new Error(
-            convertData.message ||
-            "Gagal mengubah sertifikat menjadi PDF."
+            `[CONVERT] ${
+                convertData?.message ||
+                "Gagal mengubah sertifikat menjadi PDF."
+            }`
         );
     }
 
@@ -1295,6 +1301,9 @@ async function runBatchWorker(
                 );
             }
 
+            updateProgress();
+            renderResults();
+
             console.log(
                 `[Worker ${workerId}] ${participant.name} selesai dalam ${formatSeconds(result.duration)}`
             );
@@ -1316,9 +1325,13 @@ async function runBatchWorker(
                     "Gagal memproses sertifikat.";
 
                 target.duration =
-                    performance.now() -
-                    target.startedAt;
+                    target.startedAt
+                        ? performance.now() - target.startedAt
+                        : null;
             }
+
+            updateProgress();
+            renderResults();
 
             console.error(
                 `[Worker ${workerId}] ${participant.name} gagal:`,
@@ -1417,12 +1430,18 @@ async function startBatch(
 
                 if (result) {
                     result.status =
-                        "DIPROSES";
+                        "BELUM";
 
                     result.error =
                         null;
 
                     result.webUrl =
+                        null;
+
+                    result.duration =
+                        null;
+
+                    result.startedAt =
                         null;
                 }
             }
@@ -1480,12 +1499,37 @@ async function startBatch(
         retryButton.hidden =
             failedCount === 0;
 
-        alert(
+        const failedResults =
+            batchResults.filter(
+                (item) =>
+                    item.status === "GAGAL"
+            );
+
+        const authFailures =
+            failedResults.length > 0 &&
+            failedResults.every(
+                (item) =>
+                    item.error &&
+                    (
+                        item.error.includes("SESSION") ||
+                        item.error.includes("Session Microsoft") ||
+                        item.error.includes("[UPLOAD]") ||
+                        item.error.includes("[CONVERT]")
+                    )
+            );
+
+        let completionMessage =
             `✓ Batch selesai.\n\n` +
             `Berhasil: ${successCount}\n` +
             `Gagal: ${failedCount}\n` +
-            `Worker: ${workerCount}`
-        );
+            `Worker: ${workerCount}`;
+
+        if (authFailures) {
+            completionMessage +=
+                `\n\nPeriksa login Microsoft/OneDrive, lalu gunakan tombol "Ulangi Gagal".`;
+        }
+
+        alert(completionMessage);
 
     } catch (error) {
         console.error(
