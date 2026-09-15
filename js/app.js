@@ -219,13 +219,13 @@ async function loadFolder(
          * Jika session Microsoft sudah
          * tidak tersedia / expired
          */
+
         if (response.status === 401) {
 
             window.location.href =
                 "/api/auth/login";
 
             return;
-
         }
 
         const data =
@@ -309,6 +309,7 @@ function renderFolders(
             /*
              * Icon folder
              */
+
             const icon =
                 document.createElement(
                     "div"
@@ -323,6 +324,7 @@ function renderFolders(
             /*
              * Informasi folder
              */
+
             const info =
                 document.createElement(
                     "div"
@@ -371,6 +373,7 @@ function renderFolders(
             /*
              * Arrow
              */
+
             const arrow =
                 document.createElement(
                     "div"
@@ -391,6 +394,7 @@ function renderFolders(
             /*
              * Klik folder
              */
+
             button.addEventListener(
                 "click",
                 async () => {
@@ -429,6 +433,7 @@ function renderBreadcrumb() {
     /*
      * Root OneDrive
      */
+
     const rootButton =
         document.createElement(
             "button"
@@ -480,6 +485,7 @@ function renderBreadcrumb() {
     /*
      * Folder sebelumnya
      */
+
     folderStack.forEach(
         (folder, index) => {
 
@@ -487,6 +493,7 @@ function renderBreadcrumb() {
              * Jangan tampilkan root
              * sebagai breadcrumb kedua
              */
+
             if (
                 !folder.id &&
                 index === 0
@@ -527,6 +534,7 @@ function renderBreadcrumb() {
             /*
              * Klik breadcrumb
              */
+
             button.addEventListener(
                 "click",
                 async () => {
@@ -538,6 +546,7 @@ function renderBreadcrumb() {
                      * Potong stack setelah
                      * folder yang dipilih
                      */
+
                     folderStack =
                         folderStack.slice(
                             0,
@@ -562,6 +571,7 @@ function renderBreadcrumb() {
     /*
      * Tampilkan folder yang sedang aktif
      */
+
     if (
         currentFolder.id !== null
     ) {
@@ -637,7 +647,6 @@ function hideFolderStatus() {
 
 }
 
-
 /* =========================================
    Pilih Folder Saat Ini
 ========================================= */
@@ -699,6 +708,7 @@ function blobToBase64(blob) {
                  * Kita hanya mengambil bagian
                  * setelah koma.
                  */
+
                 const base64 =
                     result.split(",")[1];
 
@@ -741,12 +751,132 @@ function sanitizeFileName(
 
 
 /* =========================================
+   Benchmark Helper
+========================================= */
+
+function createBenchmark() {
+
+    const startedAt =
+        performance.now();
+
+    const marks = {};
+
+    return {
+
+        mark(name) {
+
+            marks[name] =
+                performance.now();
+
+        },
+
+        duration(start, end) {
+
+            if (
+                marks[start] === undefined
+            ) {
+
+                return 0;
+
+            }
+
+            const endTime =
+                marks[end] !== undefined
+                    ? marks[end]
+                    : performance.now();
+
+            return endTime - marks[start];
+
+        },
+
+        total() {
+
+            return (
+                performance.now() -
+                startedAt
+            );
+
+        },
+
+        report() {
+
+            return {
+
+                "Baca template":
+                    this.duration(
+                        "start",
+                        "template-read"
+                    ),
+
+                "Convert template → Base64":
+                    this.duration(
+                        "template-read",
+                        "base64-ready"
+                    ),
+
+                "Generate PPTX API":
+                    this.duration(
+                        "base64-ready",
+                        "generate-done"
+                    ),
+
+                "Ambil PPTX response":
+                    this.duration(
+                        "generate-done",
+                        "blob-ready"
+                    ),
+
+                "Upload PPTX OneDrive":
+                    this.duration(
+                        "blob-ready",
+                        "upload-done"
+                    ),
+
+                "Convert PPTX → PDF":
+                    this.duration(
+                        "upload-done",
+                        "convert-done"
+                    ),
+
+                "Total":
+                    this.total(),
+
+            };
+
+        },
+
+    };
+
+}
+
+
+/* =========================================
+   Helper: Format Waktu
+========================================= */
+
+function formatSeconds(
+    milliseconds
+) {
+
+    return `${(
+        milliseconds / 1000
+    ).toFixed(2)} detik`;
+
+}
+
+
+/* =========================================
    Generate Sertifikat
 ========================================= */
 
 validateButton.addEventListener(
     "click",
     async () => {
+
+        const benchmark =
+            createBenchmark();
+
+        benchmark.mark("start");
 
         const template =
             templateFile.files[0];
@@ -758,6 +888,7 @@ validateButton.addEventListener(
         /*
          * Validasi template
          */
+
         if (!template) {
 
             alert(
@@ -765,12 +896,14 @@ validateButton.addEventListener(
             );
 
             return;
+
         }
 
 
         /*
          * Validasi format file
          */
+
         if (
             !template.name
                 .toLowerCase()
@@ -782,12 +915,14 @@ validateButton.addEventListener(
             );
 
             return;
+
         }
 
 
         /*
          * Validasi nama peserta
          */
+
         if (!nama) {
 
             alert(
@@ -797,12 +932,14 @@ validateButton.addEventListener(
             participantName.focus();
 
             return;
+
         }
 
 
         /*
          * Validasi folder
          */
+
         if (!selectedFolder) {
 
             alert(
@@ -812,6 +949,7 @@ validateButton.addEventListener(
             selectDriveFolder.focus();
 
             return;
+
         }
 
 
@@ -820,6 +958,7 @@ validateButton.addEventListener(
             /*
              * Disable tombol
              */
+
             validateButton.disabled =
                 true;
 
@@ -830,6 +969,7 @@ validateButton.addEventListener(
              * Membuat sertifikat
              * =====================================
              */
+
             validateButton.innerHTML =
                 "Membuat sertifikat...";
 
@@ -837,13 +977,19 @@ validateButton.addEventListener(
             /*
              * Baca file PPTX
              */
+
             const arrayBuffer =
                 await template.arrayBuffer();
+
+            benchmark.mark(
+                "template-read"
+            );
 
 
             /*
              * Convert ArrayBuffer → Base64
              */
+
             const bytes =
                 new Uint8Array(
                     arrayBuffer
@@ -869,11 +1015,16 @@ validateButton.addEventListener(
             const templateBase64 =
                 btoa(binary);
 
+            benchmark.mark(
+                "base64-ready"
+            );
+
 
             /*
              * Kirim template dan nama
              * ke API generate-pptx
              */
+
             const generateResponse =
                 await fetch(
                     "/api/generate-pptx",
@@ -897,6 +1048,7 @@ validateButton.addEventListener(
             /*
              * Cek response generate
              */
+
             if (
                 !generateResponse.ok
             ) {
@@ -925,6 +1077,10 @@ validateButton.addEventListener(
 
             }
 
+            benchmark.mark(
+                "generate-done"
+            );
+
 
             /*
              * =====================================
@@ -939,6 +1095,10 @@ validateButton.addEventListener(
 
             const generatedBlob =
                 await generateResponse.blob();
+
+            benchmark.mark(
+                "blob-ready"
+            );
 
 
             /*
@@ -961,6 +1121,7 @@ validateButton.addEventListener(
             /*
              * Nama file sertifikat
              */
+
             const safeName =
                 sanitizeFileName(
                     nama
@@ -999,39 +1160,17 @@ validateButton.addEventListener(
                                 fileBase64,
 
                             }),
+
                     }
                 );
 
 
-            /*
-             * Jika session Microsoft
-             * sudah expired
-             */
-            if (
-                uploadResponse.status === 401
-            ) {
-
-                window.location.href =
-                    "/api/auth/login";
-
-                return;
-
-            }
-
-
-            /*
-             * Ambil response upload
-             */
             const uploadData =
                 await uploadResponse.json();
 
 
-            /*
-             * Cek upload
-             */
             if (
-                !uploadResponse.ok ||
-                !uploadData.success
+                !uploadResponse.ok
             ) {
 
                 throw new Error(
@@ -1041,190 +1180,160 @@ validateButton.addEventListener(
 
             }
 
+            benchmark.mark(
+                "upload-done"
+            );
 
-            /*
- * =====================================
- * STEP 5
- * Convert PPTX → PDF
- * =====================================
- */
-
-validateButton.innerHTML =
-    "Mengkonversi ke PDF...";
-
-
-const convertResponse =
-    await fetch(
-        "/api/onedrive/convert-pdf",
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json",
-            },
-
-            body:
-                JSON.stringify({
-
-                    parentId:
-                        selectedFolder.id,
-
-                    fileName,
-
-                    /*
-                     * Setelah PDF berhasil
-                     * dibuat dan diupload,
-                     * hapus PPTX sumber.
-                     */
-                    deleteSource:
-                        true,
-
-                }),
-        }
-    );
-
-
-/*
- * Jika session Microsoft
- * sudah expired
- */
-if (
-    convertResponse.status === 401
-) {
-
-    window.location.href =
-        "/api/auth/login";
-
-    return;
-
-}
-
-
-/*
- * Ambil response conversion
- */
-const convertData =
-    await convertResponse.json();
-
-
-/*
- * Cek conversion
- */
-if (
-    !convertResponse.ok ||
-    !convertData.success
-) {
-
-    throw new Error(
-        convertData.message ||
-        "Gagal mengkonversi sertifikat menjadi PDF."
-    );
-
-}
-
-
-/*
- * =====================================
- * STEP 6
- * Conversion berhasil
- * =====================================
- */
-
-const pdfFile =
-    convertData.pdfFile;
-
-
-const pdfWebUrl =
-    pdfFile?.webUrl;
-
-
-/*
- * Pastikan informasi PDF tersedia
- */
-if (
-    !pdfFile
-) {
-
-    throw new Error(
-        "PDF berhasil diproses tetapi informasi file PDF tidak ditemukan."
-    );
-
-}
-
-
-/*
- * =====================================
- * STEP 7
- * Tampilkan hasil
- * =====================================
- */
-
-if (pdfWebUrl) {
-
-    alert(
-        `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
-        `File: ${pdfFile.name}\n\n` +
-        `Folder: ${selectedFolder.name}\n\n` +
-        `Format: PDF`
-    );
-
-
-    /*
-     * Buka PDF OneDrive
-     */
-    window.open(
-        pdfWebUrl,
-        "_blank"
-    );
-
-} else {
-
-    alert(
-        `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
-        `File: ${pdfFile.name}\n\n` +
-        `Folder: ${selectedFolder.name}`
-    );
-
-}
 
             /*
              * =====================================
-             * Reset tombol
+             * STEP 5
+             * Convert PPTX → PDF
              * =====================================
              */
 
-            validateButton.disabled = false;
-
             validateButton.innerHTML =
-                "Buat Sertifikat";
+                "Mengubah ke PDF...";
+
+
+            const convertResponse =
+                await fetch(
+                    "/api/onedrive/convert-pdf",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                parentId:
+                                    selectedFolder.id,
+
+                                fileName,
+
+                                deleteSource:
+                                    true,
+
+                            }),
+
+                    }
+                );
+
+
+            const convertData =
+                await convertResponse.json();
+
+
+            if (
+                !convertResponse.ok
+            ) {
+
+                throw new Error(
+                    convertData.message ||
+                    "Gagal mengubah sertifikat menjadi PDF."
+                );
+
+            }
+
+            benchmark.mark(
+                "convert-done"
+            );
+
+
+            /*
+             * =====================================
+             * STEP 6
+             * Selesai
+             * =====================================
+             */
+
+            const pdfFile =
+                convertData.pdfFile;
+
+
+            const benchmarkReport =
+                benchmark.report();
+
+
+            /*
+             * Tampilkan hasil benchmark
+             * di Console Browser
+             */
+
+            console.group(
+                "Certificate Generator Benchmark"
+            );
+
+            console.table(
+                Object.fromEntries(
+                    Object.entries(
+                        benchmarkReport
+                    ).map(
+                        ([key, value]) => [
+                            key,
+                            formatSeconds(value),
+                        ]
+                    )
+                )
+            );
+
+            console.groupEnd();
+
+
+            /*
+             * Alert sukses
+             */
+
+            alert(
+                `✓ Sertifikat berhasil dibuat dan disimpan di OneDrive.\n\n` +
+                `File: ${pdfFile.name}\n` +
+                `Folder: ${selectedFolder.name}\n` +
+                `Format: PDF\n` +
+                `Waktu proses: ${formatSeconds(
+                    benchmarkReport.Total
+                )}`
+            );
+
+
+            /*
+             * Buka PDF
+             */
+
+            if (
+                pdfFile.webUrl
+            ) {
+
+                window.open(
+                    pdfFile.webUrl,
+                    "_blank"
+                );
+
+            }
 
 
         } catch (error) {
-
-            /*
-             * =====================================
-             * Error Handling
-             * =====================================
-             */
 
             console.error(
                 "Generate certificate error:",
                 error
             );
 
-
             alert(
-                error.message ||
-                "Terjadi kesalahan saat membuat sertifikat."
+                `Gagal membuat sertifikat.\n\n${error.message}`
             );
 
+        } finally {
 
             /*
              * Aktifkan kembali tombol
              */
 
-            validateButton.disabled = false;
+            validateButton.disabled =
+                false;
 
             validateButton.innerHTML =
                 "Buat Sertifikat";
