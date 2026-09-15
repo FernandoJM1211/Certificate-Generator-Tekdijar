@@ -815,3 +815,37 @@ code {
     }
 
 }
+
+/* =========================================
+   Fix Folder Picker Layout
+========================================= */
+
+.folder-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+.folder-breadcrumb {
+    flex-shrink: 0;
+}
+
+.folder-status {
+    flex-shrink: 0;
+}
+
+.folder-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.folder-empty {
+    flex: 0 0 auto;
+    padding: 48px 20px;
+}
+
+.folder-modal-footer {
+    flex-shrink: 0;
+}
