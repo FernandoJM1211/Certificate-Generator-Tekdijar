@@ -25,30 +25,28 @@ module.exports = async function handler(req, res) {
             });
         }
 
-        // Konversi Base64 menjadi Buffer
         const templateBuffer = Buffer.from(templateBase64, "base64");
 
-        // Generate sertifikat
         const result = await generateCertificate(
             templateBuffer,
             nama.trim()
         );
 
-        // Kirim file PPTX
         res.setHeader(
             "Content-Type",
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         );
 
+        // Gunakan nama file ASCII tetap agar karakter nama peserta
+        // tidak pernah menyebabkan error pada HTTP Content-Disposition header.
         res.setHeader(
             "Content-Disposition",
-            `attachment; filename="Sertifikat-${nama.trim()}.pptx"`
+            'attachment; filename="certificate.pptx"'
         );
 
         return res.status(200).send(result);
 
     } catch (error) {
-
         console.error("Generate PPTX error:", error);
 
         return res.status(500).json({
