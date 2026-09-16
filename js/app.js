@@ -1203,6 +1203,8 @@ async function generateOneCertificate(
                     JSON.stringify({
                         parentId:
                             selectedFolder.id,
+                            fileId:
+            uploadData.file.id,
                         fileName,
                         deleteSource:
                             true,
